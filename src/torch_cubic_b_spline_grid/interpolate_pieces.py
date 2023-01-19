@@ -1,10 +1,12 @@
+"""Interpolate 'pieces' for piecewise uniform cubic B-spline interpolation."""
 import torch
 import einops
 
 from .constants import CUBIC_B_SPLINE_MATRIX
 
+
 def interpolate_pieces_1d(control_points: torch.Tensor, u: torch.Tensor):
-    """Batched 1D cubic B-spline interpolation.
+    """Batched uniform 1D cubic B-spline interpolation.
 
     Parameters
     ----------
@@ -12,8 +14,8 @@ def interpolate_pieces_1d(control_points: torch.Tensor, u: torch.Tensor):
         `(b, 4, n)` batch of 4 uniformly spaced n-dimensional control points
         [s0, s1, s2, s3].
     u: torch.Tensor
-        `(b, )` batch of values in the range `[0, 1]` defining the position of the
-        point to be interpolated in the interval `[s1, s2]`.
+        `(b, )` batch of interpolation coordinates in the range `[0, 1]` covering
+        the interpolation interval.
 
     Returns
     -------
@@ -29,7 +31,7 @@ def interpolate_pieces_1d(control_points: torch.Tensor, u: torch.Tensor):
 
 
 def interpolate_pieces_2d(control_points: torch.Tensor, u: torch.Tensor):
-    """Batched 2D cubic B-spline interpolation.
+    """Batched uniform 2D cubic B-spline interpolation.
 
     Parameters
     ----------
@@ -53,21 +55,21 @@ def interpolate_pieces_2d(control_points: torch.Tensor, u: torch.Tensor):
     h3 = control_points[:, 3, :, :]
 
     # separate t into components along height and width dimensions
-    th, tw = einops.rearrange(u, 'b hw -> hw b')
+    u_h, u_w = einops.rearrange(u, 'b hw -> hw b')
 
-    # 1d interpolation along width dim
-    s0 = _cubic_b_spline_interpolate_piece_1d(control_points=h0, t=tw)
-    s1 = _cubic_b_spline_interpolate_piece_1d(control_points=h1, t=tw)
-    s2 = _cubic_b_spline_interpolate_piece_1d(control_points=h2, t=tw)
-    s3 = _cubic_b_spline_interpolate_piece_1d(control_points=h3, t=tw)
+    # 1d interpolation along width dim at each height
+    s0 = interpolate_pieces_1d(control_points=h0, u=u_w)
+    s1 = interpolate_pieces_1d(control_points=h1, u=u_w)
+    s2 = interpolate_pieces_1d(control_points=h2, u=u_w)
+    s3 = interpolate_pieces_1d(control_points=h3, u=u_w)
 
     # 1d interpolation of result along height dim
     control_points = einops.rearrange([s0, s1, s2, s3], 's b n -> b s n')
-    return _cubic_b_spline_interpolate_piece_1d(control_points=control_points, t=th)
+    return interpolate_pieces_1d(control_points=control_points, u=u_h)
 
 
 def interpolate_pieces_3d(control_points: torch.Tensor, u: torch.Tensor):
-    """Batched 3D cubic B-spline interpolation.
+    """Batched uniform 3D cubic B-spline interpolation.
 
     Parameters
     ----------
@@ -94,11 +96,11 @@ def interpolate_pieces_3d(control_points: torch.Tensor, u: torch.Tensor):
     u_d = u[:, 0]
     u_hw = u[:, 1:]
 
-    # 2d interpolation on each plane
-    s0 = _cubic_b_spline_interpolate_piece_2d(control_points=d0, t=u_hw)
-    s1 = _cubic_b_spline_interpolate_piece_2d(control_points=d1, t=u_hw)
-    s2 = _cubic_b_spline_interpolate_piece_2d(control_points=d2, t=u_hw)
-    s3 = _cubic_b_spline_interpolate_piece_2d(control_points=d3, t=u_hw)
+    # 2d interpolation on each (height, width) plane at each depth
+    s0 = interpolate_pieces_2d(control_points=d0, u=u_hw)
+    s1 = interpolate_pieces_2d(control_points=d1, u=u_hw)
+    s2 = interpolate_pieces_2d(control_points=d2, u=u_hw)
+    s3 = interpolate_pieces_2d(control_points=d3, u=u_hw)
 
     # 1d interpolation of result along depth dim
     control_points = einops.rearrange([s0, s1, s2, s3], 's b n -> b s n')
@@ -130,10 +132,10 @@ def interpolate_pieces_4d(control_points: torch.Tensor, u: torch.Tensor):
     u_dhw = u[:, 1:]
 
     # 3D interpolation on each 3D grid along time dimension
-    s0 = _cubic_b_spline_interpolate_piece_3d(control_points=t0, u=u_dhw)
-    s1 = _cubic_b_spline_interpolate_piece_3d(control_points=t1, u=u_dhw)
-    s2 = _cubic_b_spline_interpolate_piece_3d(control_points=t2, u=u_dhw)
-    s3 = _cubic_b_spline_interpolate_piece_3d(control_points=t3, u=u_dhw)
+    s0 = interpolate_pieces_3d(control_points=t0, u=u_dhw)
+    s1 = interpolate_pieces_3d(control_points=t1, u=u_dhw)
+    s2 = interpolate_pieces_3d(control_points=t2, u=u_dhw)
+    s3 = interpolate_pieces_3d(control_points=t3, u=u_dhw)
 
     # 1d interpolation of result along time dim
     control_points = einops.rearrange([s0, s1, s2, s3], 's b n -> b s n')
