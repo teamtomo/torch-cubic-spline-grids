@@ -1,3 +1,7 @@
+import einops
+import torch
+
+
 def pad_grid_1d(grid: torch.Tensor):
     """Pad an array of vectors in dim -1 according to local gradients at each end.
 
@@ -34,7 +38,7 @@ def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
     padded_grid: torch.Tensor
         `(..., h+2, w+2, n)` grid
     """
-    grid = _pad_grid_1d(grid)  # pad width dim (..., h, w+2, n)
+    grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2, n)
 
     # pad height dim
     h_start = grid[..., 0, :, :] - (grid[..., 1, :, :] - grid[..., 0, :, :])
@@ -63,7 +67,7 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
         `(d+2, h+2, w+2, n)` grid
     """
     # pad in height and width dims
-    grid = _pad_grid_2d(grid)
+    grid = pad_grid_2d(grid)
 
     # pad in depth dim
     d_start = grid[..., 0, :, :, :] - (grid[..., 1, :, :, :] - grid[..., 0, :, :, :])
@@ -72,7 +76,7 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
     # reintroduce depth dim dropped by indexing
     d_start = einops.rearrange(d_start, '... h w n -> ... 1 h w n')
     d_end = einops.rearrange(d_end, '... h w n -> ... 1 h w n')
-    return torch.cat([d_start, grid, d_end])
+    return torch.cat([d_start, grid, d_end], dim=-4)
 
 
 def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
@@ -90,14 +94,15 @@ def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
         `(..., t+2, d+2, h+2, w+2, n)` grid
     """
     # pad in height and width dims
-    grid = _pad_grid_3d(grid)
+    grid = pad_grid_3d(grid)
 
     # pad in time dim
-    t_start = grid[..., 0, :, , :, :] - (grid[..., 1, :, , :, :] - grid[..., 0, :, :,
-                                                                   :, :])
-    t_end = grid[..., -1, :, :, :] + (grid[..., -1, :, :, :] - grid[..., -2, :, :, :])
+    dt_start = grid[..., 1, :, :, :, :] - grid[..., 0, :, :, :, :]
+    t_start = grid[..., 0, :, :, :, :] - dt_start
+    dt_end = grid[..., -1, :, :, :, :] - grid[..., -2, :, :, :, :]
+    t_end = grid[..., -1, :, :, :, :] + dt_end
 
     # reintroduce time dim dropped by indexing
     t_start = einops.rearrange(t_start, '... d h w n -> ... 1 d h w n')
     t_end = einops.rearrange(t_end, '... d h w n -> ... 1 d h w n')
-    return torch.cat([t_start, grid, t_end])
+    return torch.cat([t_start, grid, t_end], dim=-5)
