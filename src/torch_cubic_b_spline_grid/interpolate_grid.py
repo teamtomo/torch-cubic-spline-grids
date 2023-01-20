@@ -33,7 +33,8 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     interpolated: torch.Tensor
         `(b, n)` array of interpolated n-dimensional values.
     """
-    u = torch.tensor(u)
+    if grid.ndim == 1:
+        grid = einops.rearrange(grid, 'w -> w 1')
     epsilon = 1e-6
     u[u == 1] -= epsilon
     n_samples = len(grid)
@@ -44,8 +45,10 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
 
     # find the correct four control points for each query point in u
     du = 1 / (n_samples - 1)
-    grid_positions = torch.linspace(-du, 1 + du, steps=len(grid) + 2)
-    control_point_idx = find_control_points_1d(sample_positions=grid_positions, query_points=grid)
+    grid_positions = torch.linspace(-du, 1 + du, steps=n_samples + 2)
+    control_point_idx = find_control_points_1d(
+        sample_positions=grid_positions, query_points=u
+    )
     control_points = grid[control_point_idx]
 
     # how far into the interpolation interval is each query point?
@@ -73,6 +76,8 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     -------
     `(b, n)` array of n-dimensional interpolated values
     """
+    if grid.ndim == 2:
+        grid = einops.rearrange(grid, 'h w -> h w 1')
     n_samples_h, n_samples_w, _ = grid.shape
 
     # pad grid to handle interpolation at edges.
@@ -127,6 +132,8 @@ def interpolate_grid_3d(grid, u):
     -------
     `(b, n)` array of n-dimensional interpolated values
     """
+    if grid.ndim == 3:
+        grid = einops.rearrange(grid, 'd h w -> d h w 1')
     n_samples_d, n_samples_h, n_samples_w, _ = grid.shape
 
     # expand grid to handle interpolation at edges
@@ -191,6 +198,8 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     -------
     `(b, n)` array of n-dimensional interpolated values
     """
+    if grid.ndim == 4:
+        grid = einops.rearrange(grid, 't d h w -> t d h w 1')
     n_samples_t, n_samples_d, n_samples_h, n_samples_w, _ = grid.shape
 
     # expand grid to handle interpolation at edges
