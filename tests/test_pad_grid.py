@@ -31,7 +31,7 @@ def test_pad_3d():
           [2, 3]],
          [[4, 5],
           [6, 7]]]
-    ).view(2, 2, 2, 1)
+    )
     padded_grid = pad_grid.pad_grid_3d(grid)
     expected = torch.tensor(
         [[[-7, -6, -5, -4],
@@ -53,7 +53,7 @@ def test_pad_3d():
           [7, 8, 9, 10],
           [9, 10, 11, 12],
           [11, 12, 13, 14]]]
-    ).view(4, 4, 4, 1)
+    )
     assert torch.allclose(padded_grid, expected)
 
 
