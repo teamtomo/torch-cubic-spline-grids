@@ -3,7 +3,7 @@ import torch
 
 
 def pad_grid_1d(grid: torch.Tensor):
-    """Pad an in the last dimension according to local gradients.
+    """Pad in the last dimension according to local gradients.
 
     e.g. [0, 1, 2] -> [-1, 0, 1, 2, 3]
 
@@ -15,6 +15,7 @@ def pad_grid_1d(grid: torch.Tensor):
     padded_grid: torch.Tensor
         `(..., w+2)` padded array.
     """
+    # find values for padding at each end of width dim
     start = grid[..., 0] - (grid[..., 1] - grid[..., 0])
     end = grid[..., -1] + (grid[..., -1] - grid[..., -2])
 
@@ -46,7 +47,7 @@ def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
     """
     grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2)
 
-    # pad height dim
+    # find values for padding at each end of height dim
     h_start = grid[..., 0, :] - (grid[..., 1, :] - grid[..., 0, :])
     h_end = grid[..., -1, :] + (grid[..., -1, :] - grid[..., -2, :])
 
@@ -59,7 +60,7 @@ def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
 
 
 def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
-    """
+    """Pad a 3D grid of values according to local gradients.
 
     Parameters
     ----------
@@ -75,7 +76,7 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
     # pad in height and width dims
     grid = pad_grid_2d(grid)
 
-    # pad in depth dim
+    # find values for padding at each end of depth dim
     d_start = grid[..., 0, :, :] - (grid[..., 1, :, :] - grid[..., 0, :, :])
     d_end = grid[..., -1, :, :] + (grid[..., -1, :, :] - grid[..., -2, :, :])
 
@@ -86,7 +87,7 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
 
 
 def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
-    """
+    """Pad a 4D grid of values according to local gradients.
 
     Parameters
     ----------
@@ -102,7 +103,7 @@ def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
     # pad in height and width dims
     grid = pad_grid_3d(grid)  # (..., t, d+2, h+2, w+2)
 
-    # pad in time dim
+    # find values for padding at each end of time dim
     dt_start = grid[..., 1, :, :, :] - grid[..., 0, :, :, :]
     t_start = grid[..., 0, :, :, :] - dt_start
     dt_end = grid[..., -1, :, :, :] - grid[..., -2, :, :, :]
