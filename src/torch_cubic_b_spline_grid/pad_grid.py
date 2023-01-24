@@ -13,7 +13,7 @@ def pad_grid_1d(grid: torch.Tensor):
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., w+2)`
+        `(..., w+2)` padded array.
     """
     start = grid[..., 0] - (grid[..., 1] - grid[..., 0])
     end = grid[..., -1] + (grid[..., -1] - grid[..., -2])
@@ -42,7 +42,7 @@ def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., h+2, w+2)` padded grid.
+        `(..., h+2, w+2)` padded array.
     """
     grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2)
 
@@ -64,25 +64,25 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
     Parameters
     ----------
     grid: torch.Tensor
-        `(..., d, h, w, n)` 3D grid which should be interpreted as a
-        `(..., d, h, w)` array of n-dimensional values.
+        `(..., d, h, w)` array of values to be padded in depth, height and width
+        dimensions.
 
     Returns
     -------
     padded_grid: torch.Tensor
-        `(d+2, h+2, w+2, n)` grid
+        `(..., d+2, h+2, w+2)` padded array.
     """
     # pad in height and width dims
     grid = pad_grid_2d(grid)
 
     # pad in depth dim
-    d_start = grid[..., 0, :, :, :] - (grid[..., 1, :, :, :] - grid[..., 0, :, :, :])
-    d_end = grid[..., -1, :, :, :] + (grid[..., -1, :, :, :] - grid[..., -2, :, :, :])
+    d_start = grid[..., 0, :, :] - (grid[..., 1, :, :] - grid[..., 0, :, :])
+    d_end = grid[..., -1, :, :] + (grid[..., -1, :, :] - grid[..., -2, :, :])
 
     # reintroduce depth dim dropped by indexing
-    d_start = einops.rearrange(d_start, '... h w n -> ... 1 h w n')
-    d_end = einops.rearrange(d_end, '... h w n -> ... 1 h w n')
-    return torch.cat([d_start, grid, d_end], dim=-4)
+    d_start = einops.rearrange(d_start, '... h w -> ... 1 h w')
+    d_end = einops.rearrange(d_end, '... h w -> ... 1 h w')
+    return torch.cat([d_start, grid, d_end], dim=-3)
 
 
 def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
