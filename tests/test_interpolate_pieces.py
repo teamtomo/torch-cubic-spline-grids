@@ -18,8 +18,8 @@ def test_interpolate_pieces_1d():
 
 def test_interpolate_pieces_1d_with_batched_queries():
     """test batched evaluation over one 'piece' (set of 4 control points)."""
-    pieces = torch.tensor([[0, 1, 2, 3]]).float().view(1, 4, 1)
-    u = torch.tensor([0, 0.5, 1])
+    pieces = torch.tensor([[0, 1, 2, 3]]).float().view(1, 1, 4)  # (b, c, 4)
+    u = torch.tensor([0, 0.5, 1])  # (b, )
     result = interpolate_pieces.interpolate_pieces_1d(pieces, u)
 
     # cubic b spline intepolation should be equivalent to linear interpolation
