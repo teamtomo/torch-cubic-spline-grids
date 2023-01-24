@@ -67,12 +67,11 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(h, w, c)` 2D grid of uniformly spaced values in `c` channels to be
-        interpolated.
+        `(c, h, w)` multichannel 2D grid.
     u: torch.Tensor
-        `(b, 2)` array of values in the range [0, 1].
-        [0, 1] in b[:, 0] covers dim 0 (h) of y
-        [0, 1] in b[:, 1] covers dim 1 (w) of y
+        `(b, 2)` array of values in the range `[0, 1]`.
+        `[0, 1]` in `u[:, 0]` covers dim -2 (h) of `grid`
+        `[0, 1]` in `u[:, 1]` covers dim -1 (w) of `grid`
 
     Returns
     -------
@@ -122,7 +121,7 @@ def interpolate_grid_3d(grid, u):
     Parameters
     ----------
     grid: torch.Tensor
-        `(d, h, w, c)` 3D grid of c-dimensional points.
+        `(c, d, h, w)` multichannel 3D grid.
     u: torch.Tensor
         `(b, 3)` array of values in the range [0, 1].
         [0, 1] in b[:, 0] covers depth dim `d` of `grid`
@@ -134,8 +133,8 @@ def interpolate_grid_3d(grid, u):
     `(b, c)` array of c-dimensional interpolated values
     """
     if grid.ndim == 3:
-        grid = einops.rearrange(grid, 'd h w -> d h w 1')
-    n_samples_d, n_samples_h, n_samples_w, _ = grid.shape
+        grid = einops.rearrange(grid, 'd h w -> 1 d h w')
+    _, n_samples_d, n_samples_h, n_samples_w = grid.shape
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_3d(grid)
@@ -172,12 +171,11 @@ def interpolate_grid_3d(grid, u):
     )
 
     # grid the control point indices and interpolate
-    control_point_grid_idx = (
-        einops.repeat(control_point_idx_d, 'b d -> b d h w', h=4, w=4),
-        einops.repeat(control_point_idx_h, 'b h -> b d h w', d=4, w=4),
-        einops.repeat(control_point_idx_w, 'b w -> b d h w', d=4, h=4),
-    )
-    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, c)
+    idx_d = einops.repeat(control_point_idx_d, 'b d -> b d h w', h=4, w=4)
+    idx_h = einops.repeat(control_point_idx_h, 'b h -> b d h w', d=4, w=4)
+    idx_w = einops.repeat(control_point_idx_w, 'b w -> b d h w', d=4, h=4)
+    control_points = grid[:, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4)
+    control_points = einops.rearrange(control_points, 'c b d h w -> b c d h w')
     return interpolate_pieces_3d(control_points, interpolation_u)
 
 
