@@ -91,24 +91,24 @@ def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
     Parameters
     ----------
     grid: torch.Tensor
-        `(..., t, d, h, w, n)` 4+D grid which should be interpreted as a
-        `(..., t, d, h, w)` array of n-dimensional values.
+        `(..., t, d, h, w)` array of values to be padded in time, depth, height and
+        width dimensions.
 
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., t+2, d+2, h+2, w+2, n)` grid
+        `(..., t+2, d+2, h+2, w+2)` grid
     """
     # pad in height and width dims
-    grid = pad_grid_3d(grid)
+    grid = pad_grid_3d(grid)  # (..., t, d+2, h+2, w+2)
 
     # pad in time dim
-    dt_start = grid[..., 1, :, :, :, :] - grid[..., 0, :, :, :, :]
-    t_start = grid[..., 0, :, :, :, :] - dt_start
-    dt_end = grid[..., -1, :, :, :, :] - grid[..., -2, :, :, :, :]
-    t_end = grid[..., -1, :, :, :, :] + dt_end
+    dt_start = grid[..., 1, :, :, :] - grid[..., 0, :, :, :]
+    t_start = grid[..., 0, :, :, :] - dt_start
+    dt_end = grid[..., -1, :, :, :] - grid[..., -2, :, :, :]
+    t_end = grid[..., -1, :, :, :] + dt_end
 
     # reintroduce time dim dropped by indexing
-    t_start = einops.rearrange(t_start, '... d h w n -> ... 1 d h w n')
-    t_end = einops.rearrange(t_end, '... d h w n -> ... 1 d h w n')
-    return torch.cat([t_start, grid, t_end], dim=-5)
+    t_start = einops.rearrange(t_start, '... d h w -> ... 1 d h w')
+    t_end = einops.rearrange(t_end, '... d h w -> ... 1 d h w')
+    return torch.cat([t_start, grid, t_end], dim=-4)
