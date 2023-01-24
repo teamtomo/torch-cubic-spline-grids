@@ -11,23 +11,21 @@ def interpolate_pieces_1d(control_points: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     control_points: torch.Tensor
-        `(b, 4, n)` batch of 4 uniformly spaced n-dimensional control points
-        [s0, s1, s2, s3].
+        `(b, c, 4)` batch of 4 uniformly spaced control points `[p0, p1, p2, p3]`
+        in `c` channels.
     u: torch.Tensor
-        `(b, )` batch of interpolation coordinates in the range `[0, 1]` covering
-        the interpolation interval.
+        `(b, )` batch of interpolants in the range [0, 1] covering the interpolation
+        interval between `p1` and `p2`
 
     Returns
     -------
     interpolated: torch.Tensor
-        `(b, n)` batch of n-dimensional values interpolated at `t` using
-        `control_points`.
+        `(b, c)` array of per-channel interpolants of `control_points` at `u`.
     """
-    u = torch.stack([u ** 0, u, u ** 2, u ** 3], dim=-1)
-    u = einops.rearrange(u, 'b u -> b 1 u')  # extra dim for matmul
-    control_points = einops.rearrange(control_points, 'b s n -> n b s 1')
+    u = einops.rearrange([u ** 0, u, u ** 2, u ** 3], 'u b -> b 1 1 u')
+    control_points = einops.rearrange(control_points, 'b c s -> b c s 1')
     interpolated = u @ CUBIC_B_SPLINE_MATRIX @ control_points
-    return einops.rearrange(interpolated, 'n b 1 1 -> b n')
+    return einops.rearrange(interpolated, 'b c 1 1 -> b c')
 
 
 def interpolate_pieces_2d(control_points: torch.Tensor, u: torch.Tensor):

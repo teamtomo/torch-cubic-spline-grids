@@ -24,7 +24,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(w, c)` length `w` vector of values in `c` channels to be interpolated.
+        `(c, w)` array of `w` values in `c` channels to be interpolated.
     u: torch.Tensor
         `(b, )` array of query points in the range `[0, 1]` covering the `w`
         dimension of `grid`.
@@ -49,7 +49,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     control_point_idx = find_control_points_1d(
         sample_positions=grid_positions, query_points=u
     )
-    control_points = grid[control_point_idx]
+    control_points = grid[..., control_point_idx]
 
     # how far into the interpolation interval is each query point?
     s1_idx = control_point_idx[:, 1]

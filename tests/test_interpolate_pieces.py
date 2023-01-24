@@ -9,7 +9,7 @@ def test_interpolate_pieces_1d():
     u = 0.5
     points = torch.tensor([-1.5, 5.1, 2.2, 6.8])
     result = interpolate_pieces.interpolate_pieces_1d(
-        control_points=points.view(1, 4, 1),  # (b, 4, n)
+        control_points=points.view(1, 1, 4),  # (b, c, 4)
         u=torch.tensor([u])
     )
     expected = torch.tensor([1, u, u ** 2, u ** 3]) @ CUBIC_B_SPLINE_MATRIX @ points
