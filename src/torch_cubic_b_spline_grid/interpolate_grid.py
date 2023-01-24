@@ -37,7 +37,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
         grid = einops.rearrange(grid, 'w -> 1 w')
     epsilon = 1e-6
     u[u == 1] -= epsilon
-    n_samples = len(grid)
+    n_samples = grid.shape[-1]
 
     # handle interpolation at edges by extending grid of control points according to
     # local gradients
@@ -49,12 +49,13 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     control_point_idx = find_control_points_1d(
         sample_positions=grid_positions, query_points=u
     )
-    control_points = grid[..., control_point_idx]
+    control_points = grid[..., control_point_idx]  # (c, b, 4)
+    control_points = einops.rearrange(control_points, 'c b p -> b c p')
 
     # how far into the interpolation interval is each query point?
-    s1_idx = control_point_idx[:, 1]
-    u_s1 = grid_positions[s1_idx]
-    interpolation_u = (u - u_s1) / du
+    p1_idx = control_point_idx[:, 1]
+    u_p1 = grid_positions[p1_idx]
+    interpolation_u = (u - u_p1) / du
 
     # interpolate
     return interpolate_pieces_1d(control_points, interpolation_u)
