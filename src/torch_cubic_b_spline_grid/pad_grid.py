@@ -3,25 +3,25 @@ import torch
 
 
 def pad_grid_1d(grid: torch.Tensor):
-    """Pad an array of vectors in dim -1 according to local gradients at each end.
+    """Pad an in the last dimension according to local gradients.
 
     e.g. [0, 1, 2] -> [-1, 0, 1, 2, 3]
 
     grid: torch.Tensor
-        `(..., w, n)` length w vector of n-dimensional values to be padded
+        `(..., w)` array of values to be padded in last dimension.
 
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., w+2, n)`
+        `(..., w+2)`
     """
-    start = grid[..., 0, :] - (grid[..., 1, :] - grid[..., 0, :])
-    end = grid[..., -1, :] + (grid[..., -1, :] - grid[..., -2, :])
+    start = grid[..., 0] - (grid[..., 1] - grid[..., 0])
+    end = grid[..., -1] + (grid[..., -1] - grid[..., -2])
 
     # reintroduce width dim lost during indexing
-    start = einops.rearrange(start, '... n -> ... 1 n')
-    end = einops.repeat(end, '... n -> ... 1 n')
-    return torch.cat([start, grid, end], dim=-2)
+    start = einops.rearrange(start, '... -> ... 1')
+    end = einops.repeat(end, '... -> ... 1')
+    return torch.cat([start, grid, end], dim=-1)
 
 
 def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:

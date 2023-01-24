@@ -24,17 +24,17 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(w, n)` length `w` vector of n-dimensional values to be interpolated.
+        `(w, c)` length `w` vector of values in `c` channels to be interpolated.
     u: torch.Tensor
         `(b, )` array of query points in the range `[0, 1]` covering the `w`
         dimension of `grid`.
     Returns
     -------
     interpolated: torch.Tensor
-        `(b, n)` array of interpolated n-dimensional values.
+        `(b, c)` array of interpolated values in each channel..
     """
     if grid.ndim == 1:
-        grid = einops.rearrange(grid, 'w -> w 1')
+        grid = einops.rearrange(grid, 'w -> 1 w')
     epsilon = 1e-6
     u[u == 1] -= epsilon
     n_samples = len(grid)
@@ -66,7 +66,8 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(h, w, n)` 2D grid of uniform n-dimensional samples to be interpolated.
+        `(h, w, c)` 2D grid of uniformly spaced values in `c` channels to be
+        interpolated.
     u: torch.Tensor
         `(b, 2)` array of values in the range [0, 1].
         [0, 1] in b[:, 0] covers dim 0 (h) of y
@@ -74,7 +75,7 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
 
     Returns
     -------
-    `(b, n)` array of n-dimensional interpolated values
+    `(b, c)` array of interpolated values in each channel.
     """
     if grid.ndim == 2:
         grid = einops.rearrange(grid, 'h w -> h w 1')
@@ -121,7 +122,7 @@ def interpolate_grid_3d(grid, u):
     Parameters
     ----------
     grid: torch.Tensor
-        `(d, h, w, n)` 3D grid of n-dimensional points.
+        `(d, h, w, c)` 3D grid of c-dimensional points.
     u: torch.Tensor
         `(b, 3)` array of values in the range [0, 1].
         [0, 1] in b[:, 0] covers depth dim `d` of `grid`
@@ -130,7 +131,7 @@ def interpolate_grid_3d(grid, u):
 
     Returns
     -------
-    `(b, n)` array of n-dimensional interpolated values
+    `(b, c)` array of c-dimensional interpolated values
     """
     if grid.ndim == 3:
         grid = einops.rearrange(grid, 'd h w -> d h w 1')
@@ -176,7 +177,7 @@ def interpolate_grid_3d(grid, u):
         einops.repeat(control_point_idx_h, 'b h -> b d h w', d=4, w=4),
         einops.repeat(control_point_idx_w, 'b w -> b d h w', d=4, h=4),
     )
-    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, n)
+    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, c)
     return interpolate_pieces_3d(control_points, interpolation_u)
 
 
@@ -186,7 +187,7 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(t, d, h, w, n)` 4D grid of n-dimensional points.
+        `(t, d, h, w, c)` 4D grid of c-dimensional points.
     u: torch.Tensor
         `(b, 4)` array of values in the range [0, 1].
         [0, 1] in b[:, 0] covers time dim `t` of `grid`
@@ -196,7 +197,7 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
 
     Returns
     -------
-    `(b, n)` array of n-dimensional interpolated values
+    `(b, c)` array of c-dimensional interpolated values
     """
     if grid.ndim == 4:
         grid = einops.rearrange(grid, 't d h w -> t d h w 1')
@@ -256,5 +257,5 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
         einops.repeat(control_point_idx_h, 'b h -> b t d h w', t=4, d=4, w=4),
         einops.repeat(control_point_idx_w, 'b w -> b t d h w', t=4, d=4, h=4),
     )
-    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, 4, n)
+    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, 4, c)
     return interpolate_pieces_4d(control_points, interpolation_u)

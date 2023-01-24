@@ -1,14 +1,12 @@
-import einops
-import numpy as np
 import torch
 
 from torch_cubic_b_spline_grid import pad_grid
 
 
 def test_pad_1d():
-    grid = torch.arange(3).view((3, 1))
+    grid = torch.arange(3)
     padded_grid = pad_grid.pad_grid_1d(grid)
-    expected = torch.tensor([-1, 0, 1, 2, 3]).view((5, 1))
+    expected = torch.tensor([-1, 0, 1, 2, 3])
     assert torch.allclose(padded_grid, expected)
 
 
