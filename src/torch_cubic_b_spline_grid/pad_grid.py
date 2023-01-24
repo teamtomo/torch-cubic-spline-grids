@@ -25,31 +25,37 @@ def pad_grid_1d(grid: torch.Tensor):
 
 
 def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
-    """
+    """Pad a 2D grid of values according to local gradients.
+
+    ```
+    e.g.            [[-3, -2, -1, 0]
+         [[0, 1]     [-1,  0,  1, 2]
+          [2, 3]] -> [ 1,  2,  3, 4]
+                     [ 3,  4,  5, 6]]
+    ```
 
     Parameters
     ----------
     grid: torch.Tensor
-        `(..., h, w, n)` 2D grid which should be interpreted as a
-        `(..., h, w)` array of n-dimensional values
+        `(..., h, w)` array of values to be padded in height and width dimensions.
 
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., h+2, w+2, n)` grid
+        `(..., h+2, w+2)` padded grid.
     """
-    grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2, n)
+    grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2)
 
     # pad height dim
-    h_start = grid[..., 0, :, :] - (grid[..., 1, :, :] - grid[..., 0, :, :])
-    h_end = grid[..., -1, :, :] + (grid[..., -1, :, :] - grid[..., -2, :, :])
+    h_start = grid[..., 0, :] - (grid[..., 1, :] - grid[..., 0, :])
+    h_end = grid[..., -1, :] + (grid[..., -1, :] - grid[..., -2, :])
 
     # reintroduce height dim lost through indexing
-    h_start = einops.rearrange(h_start, '... w d -> ... 1 w d')
-    h_end = einops.rearrange(h_end, '... w d -> ... 1 w d')
+    h_start = einops.rearrange(h_start, '... w -> ... 1 w')
+    h_end = einops.rearrange(h_end, '... w -> ... 1 w')
 
     # pad height dim
-    return torch.cat([h_start, grid, h_end], dim=-3)
+    return torch.cat([h_start, grid, h_end], dim=-2)
 
 
 def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:

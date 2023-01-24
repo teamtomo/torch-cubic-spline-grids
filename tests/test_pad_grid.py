@@ -14,14 +14,14 @@ def test_pad_2d():
     grid = torch.tensor(
         [[0, 1],
          [2, 3]]
-    ).view(2, 2, 1)
+    )
     padded_grid = pad_grid.pad_grid_2d(grid)
     expected = torch.tensor(
         [[-3, -2, -1, 0],
          [-1, 0, 1, 2],
          [1, 2, 3, 4],
          [3, 4, 5, 6]]
-    ).view((4, 4, 1))
+    )
     assert torch.allclose(padded_grid, expected)
 
 
