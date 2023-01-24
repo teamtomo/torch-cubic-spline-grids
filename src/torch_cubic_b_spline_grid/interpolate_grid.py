@@ -79,8 +79,8 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     `(b, c)` array of interpolated values in each channel.
     """
     if grid.ndim == 2:
-        grid = einops.rearrange(grid, 'h w -> h w 1')
-    n_samples_h, n_samples_w, _ = grid.shape
+        grid = einops.rearrange(grid, 'h w -> 1 h w')
+    _, n_samples_h, n_samples_w = grid.shape
 
     # pad grid to handle interpolation at edges.
     grid = pad_grid_2d(grid)
@@ -109,11 +109,10 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     )
 
     # construct (4, 4) grids of control points for 2D interpolation and interpolate
-    control_point_grid_idx = (
-        einops.repeat(control_point_idx_h, 'b h -> b h w', w=4),
-        einops.repeat(control_point_idx_w, 'b w -> b h w', h=4)
-    )
-    control_points = grid[control_point_grid_idx]  # (b, 4, 4, d)
+    idx_h = einops.repeat(control_point_idx_h, 'b h -> b h w', w=4)
+    idx_w = einops.repeat(control_point_idx_w, 'b w -> b h w', h=4)
+    control_points = grid[..., idx_h, idx_w]  # (c, b, 4, 4)
+    control_points = einops.rearrange(control_points, 'c b h w -> b c h w')
     return interpolate_pieces_2d(control_points, interpolation_u)
 
 

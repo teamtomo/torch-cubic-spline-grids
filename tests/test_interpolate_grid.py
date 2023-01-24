@@ -22,3 +22,16 @@ def test_interpolate_grid_1d_approx():
     mean_absolute_error = torch.mean(torch.abs(sample_y - ground_truth_y))
     assert mean_absolute_error <= 0.01
 
+
+def test_interpolate_grid_2d():
+    """Check that 2D interpolation works."""
+    grid = torch.tensor(
+        [[0, 1, 2, 3],
+         [4, 5, 6, 7],
+         [8, 9, 10, 11],
+         [12, 13, 14, 15]]
+    ).float()
+    u = torch.tensor([0.5, 0.5]).view(1, 2)
+    result = interpolate_grid.interpolate_grid_2d(grid, u)
+    expected = torch.tensor([7.5])
+    assert torch.allclose(result, expected)
