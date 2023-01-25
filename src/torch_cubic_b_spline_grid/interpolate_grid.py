@@ -185,7 +185,7 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     Parameters
     ----------
     grid: torch.Tensor
-        `(t, d, h, w, c)` 4D grid of c-dimensional points.
+        `(c, t, d, h, w)` multichannel 4D grid.
     u: torch.Tensor
         `(b, 4)` array of values in the range [0, 1].
         [0, 1] in b[:, 0] covers time dim `t` of `grid`
@@ -198,8 +198,8 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     `(b, c)` array of c-dimensional interpolated values
     """
     if grid.ndim == 4:
-        grid = einops.rearrange(grid, 't d h w -> t d h w 1')
-    n_samples_t, n_samples_d, n_samples_h, n_samples_w, _ = grid.shape
+        grid = einops.rearrange(grid, 't d h w -> 1 t d h w')
+    _, n_samples_t, n_samples_d, n_samples_h, n_samples_w = grid.shape
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_4d(grid)
@@ -249,11 +249,10 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     interpolation_u = einops.rearrange(interpolation_u, 'tdhw b -> b tdhw')
 
     # grid the control point indices and interpolate
-    control_point_grid_idx = (
-        einops.repeat(control_point_idx_t, 'b t -> b t d h w', d=4, h=4, w=4),
-        einops.repeat(control_point_idx_d, 'b d -> b t d h w', t=4, h=4, w=4),
-        einops.repeat(control_point_idx_h, 'b h -> b t d h w', t=4, d=4, w=4),
-        einops.repeat(control_point_idx_w, 'b w -> b t d h w', t=4, d=4, h=4),
-    )
-    control_points = grid[control_point_grid_idx]  # (b, 4, 4, 4, 4, c)
+    idx_t = einops.repeat(control_point_idx_t, 'b t -> b t d h w', d=4, h=4, w=4)
+    idx_d = einops.repeat(control_point_idx_d, 'b d -> b t d h w', t=4, h=4, w=4)
+    idx_h = einops.repeat(control_point_idx_h, 'b h -> b t d h w', t=4, d=4, w=4)
+    idx_w = einops.repeat(control_point_idx_w, 'b w -> b t d h w', t=4, d=4, h=4)
+    control_points = grid[:, idx_t, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4, 4)
+    control_points = einops.rearrange(control_points, 'c b t d h w -> b c t d h w')
     return interpolate_pieces_4d(control_points, interpolation_u)
