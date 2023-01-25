@@ -61,12 +61,14 @@ class CubicBSplineGrid(torch.nn.Module):
 
     def _coerce_coordinates(self, u: torch.Tensor) -> None:
         u = torch.atleast_1d(torch.as_tensor(u, dtype=torch.float32))
-        if self.ndim > 1:
+        if self.ndim == 1:
+            return u
+        else:
             u = torch.atleast_2d(u)
-        if ndim := u.shape[-1] != self.ndim:
-            raise ValueError(
-                f'Cannot interpolate {self.ndim} grid with {ndim} coordinates'
-            )
+            if ndim := u.shape[-1] != self.ndim:
+                raise ValueError(
+                    f'Cannot interpolate {self.ndim} grid with {ndim} coordinates'
+                )
         return u
 
 
