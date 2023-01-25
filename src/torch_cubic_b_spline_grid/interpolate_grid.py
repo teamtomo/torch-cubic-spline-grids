@@ -35,8 +35,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     """
     if grid.ndim == 1:
         grid = einops.rearrange(grid, 'w -> 1 w')
-    epsilon = 1e-6
-    u[u == 1] -= epsilon
+    u = torch.clamp(u, min=0, max=1)
     n_samples = grid.shape[-1]
 
     # handle interpolation at edges by extending grid of control points according to
@@ -80,6 +79,7 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     if grid.ndim == 2:
         grid = einops.rearrange(grid, 'h w -> 1 h w')
     _, n_samples_h, n_samples_w = grid.shape
+    u = torch.clamp(u, min=0, max=1)
 
     # pad grid to handle interpolation at edges.
     grid = pad_grid_2d(grid)
@@ -135,6 +135,7 @@ def interpolate_grid_3d(grid, u):
     if grid.ndim == 3:
         grid = einops.rearrange(grid, 'd h w -> 1 d h w')
     _, n_samples_d, n_samples_h, n_samples_w = grid.shape
+    u = torch.clamp(u, min=0, max=1)
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_3d(grid)
@@ -200,6 +201,7 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     if grid.ndim == 4:
         grid = einops.rearrange(grid, 't d h w -> 1 t d h w')
     _, n_samples_t, n_samples_d, n_samples_h, n_samples_w = grid.shape
+    u = torch.clamp(u, min=0, max=1)
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_4d(grid)

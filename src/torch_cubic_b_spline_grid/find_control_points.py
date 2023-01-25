@@ -19,7 +19,15 @@ def find_control_points_1d(sample_positions: torch.Tensor, query_points: torch.T
     control_point_idx: torch.Tensor
         `(b, 4)` array of indices for control points.
     """
+    # fix for numerical stability issues around 0 and 1
+    # ensures valid control point indices are selected
+    epsilon = 1e-6
+    sample_positions[sample_positions < epsilon] = 0 - epsilon
+    sample_positions[torch.abs(sample_positions - 1) < epsilon] = 1 + epsilon
+
     # find index of upper bound of interval for each query point
+    sample_positions = sample_positions.contiguous()
+    query_points = query_points.contiguous()
     iub_idx = torch.searchsorted(sample_positions, query_points, side='right')
 
     # generate (b, 4) array of indices of control points [s0, s1, s2, s3]

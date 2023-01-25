@@ -65,9 +65,10 @@ class CubicBSplineGrid(torch.nn.Module):
             return u
         else:
             u = torch.atleast_2d(u)
-            if ndim := u.shape[-1] != self.ndim:
+            if u.shape[-1] != self.ndim:
+                ndim = u.shape[-1]
                 raise ValueError(
-                    f'Cannot interpolate {self.ndim} grid with {ndim} coordinates'
+                    f'Cannot interpolate {self.ndim}D grid with {ndim}D coordinates'
                 )
         return u
 
