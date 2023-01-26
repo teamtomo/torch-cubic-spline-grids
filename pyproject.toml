@@ -27,6 +27,7 @@ dependencies = [
     "torch",
     "numpy",
     "einops",
+    "typing-extensions",
 ]
 
 # extras
