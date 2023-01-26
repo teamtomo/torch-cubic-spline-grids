@@ -20,8 +20,8 @@ def test_1d_grid_optimisation():
             y += torch.normal(mean=torch.zeros(len(y)), std=0.3)
         return y
 
-    optimiser = torch.optim.SGD(lr=0.3, params=grid.parameters())
-    for i in range(1000):
+    optimiser = torch.optim.SGD(lr=0.5, params=grid.parameters())
+    for i in range(5000):
         x = torch.rand(size=(n_observations_per_iteration,))
         observations = f(x, add_noise=True)
         prediction = grid(x).squeeze()
