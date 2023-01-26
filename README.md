@@ -11,14 +11,13 @@ _Cubic B-spline interpolation on multidimensional grids in PyTorch._
 The primary goal of this package is to provide a learnable, continuous
 parametrization of 1-4D spaces.
 
-This is a PyTorch implementation of the parametrization used in
-[Warp](http://warpem.com/warp/#) to model continuous deformation
+This is a PyTorch implementation of the model used in
+[Warp](http://warpem.com/warp/#) for continuous deformation
 fields and locally variable optical parameters in cryo-EM images.
-The approach is eloquently described in
-[Dimitry Tegunov's paper](https://doi.org/10.1038/s41592-019-0580-y)
-and quoted below.
 
-> #### Spline interpolation on multi-dimensional grids
+The approach is eloquently described in
+[Dimitry Tegunov's paper](https://doi.org/10.1038/s41592-019-0580-y):
+
 > Many methods in Warp are based on a continuous parametrization of 1- to
 > 3-dimensional spaces.
 > This parameterization is achieved by spline interpolation between points on a coarse,
