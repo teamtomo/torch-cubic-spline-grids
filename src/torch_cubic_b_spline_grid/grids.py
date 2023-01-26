@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Tuple, Callable, Union, Sequence
+from typing import Tuple, Callable, Union, Sequence, Optional
 
 import torch
 
@@ -23,7 +23,7 @@ class CubicBSplineGrid(torch.nn.Module):
 
     def __init__(
         self,
-        resolution: Tuple[int, ...] | None = None,
+        resolution: Optional[Tuple[int, ...]] = None,
         n_channels: int = 1
     ):
         super().__init__()
@@ -80,7 +80,7 @@ class CubicBSplineGrid1d(CubicBSplineGrid):
 
     def __init__(
         self,
-        resolution: Union[int, Tuple[int]] | None = None,
+        resolution: Optional[Union[int, Tuple[int]]] = None,
         n_channels: int = 1):
         if isinstance(resolution, int):
             resolution = tuple([resolution])
