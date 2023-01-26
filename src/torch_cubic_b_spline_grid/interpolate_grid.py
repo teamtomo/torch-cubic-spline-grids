@@ -37,21 +37,19 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     """
     if grid.ndim == 1:
         grid = einops.rearrange(grid, 'w -> 1 w')
-    _, n_samples_w = grid.shape
+    _, w = grid.shape
 
     # handle interpolation at edges by extending grid of control points according to
     # local gradients
     grid = pad_grid_1d(grid)
 
-    # find the control points for each grid interpolant
-    control_point_idx, interpolation_u = grid_interpolant_to_interpolation_data_1d(
-        u, n_samples=n_samples_w
-    )
-    control_points = grid[..., control_point_idx]  # (c, b, 4)
+    # find control point indices and interpolation coordinate
+    idx, u = grid_interpolant_to_interpolation_data_1d(u, n_samples=w)
+    control_points = grid[..., idx]  # (c, b, 4)
     control_points = einops.rearrange(control_points, 'c b p -> b c p')
 
     # interpolate
-    return interpolate_pieces_1d(control_points, interpolation_u)
+    return interpolate_pieces_1d(control_points, u)
 
 
 def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
@@ -72,41 +70,22 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     """
     if grid.ndim == 2:
         grid = einops.rearrange(grid, 'h w -> 1 h w')
-    _, n_samples_h, n_samples_w = grid.shape
-    u = torch.clamp(u, min=0, max=1)
+    _, h, w = grid.shape
 
     # pad grid to handle interpolation at edges.
     grid = pad_grid_2d(grid)
 
-    # find indices for the four control points in each dimension
-    du_h = 1 / (n_samples_h - 1)
-    du_w = 1 / (n_samples_w - 1)
-    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
-    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
-    control_point_idx_h = find_control_point_idx_1d(
-        sample_positions=grid_u_h, query_points=u[:, 0]
-    )
-    control_point_idx_w = find_control_point_idx_1d(
-        sample_positions=grid_u_w, query_points=u[:, 1]
-    )
+    # find control point indices and interpolation coordinate in each dim
+    idx_h, u_h = grid_interpolant_to_interpolation_data_1d(u[:, 0], n_samples=h)
+    idx_w, u_w = grid_interpolant_to_interpolation_data_1d(u[:, 1], n_samples=w)
 
-    # how far into the interpolation interval is each query point along each dimension
-    s1_h_idx = control_point_idx_h[:, 1]
-    s1_w_idx = control_point_idx_w[:, 1]
-    s1_h = grid_u_h[s1_h_idx]
-    s1_w = grid_u_w[s1_w_idx]
-    interpolation_u_h = (u[:, 0] - s1_h) / du_h
-    interpolation_u_w = (u[:, 1] - s1_w) / du_w
-    interpolation_u = einops.rearrange(
-        [interpolation_u_h, interpolation_u_w], 'hw b -> b hw'
-    )
-
-    # construct (4, 4) grids of control points for 2D interpolation and interpolate
-    idx_h = einops.repeat(control_point_idx_h, 'b h -> b h w', w=4)
-    idx_w = einops.repeat(control_point_idx_w, 'b w -> b h w', h=4)
+    # construct (4, 4) grids of control points and 2D interpolant then interpolate
+    idx_h = einops.repeat(idx_h, 'b h -> b h w', w=4)
+    idx_w = einops.repeat(idx_w, 'b w -> b h w', h=4)
     control_points = grid[..., idx_h, idx_w]  # (c, b, 4, 4)
     control_points = einops.rearrange(control_points, 'c b h w -> b c h w')
-    return interpolate_pieces_2d(control_points, interpolation_u)
+    u = einops.rearrange([u_h, u_w], 'hw b -> b hw')
+    return interpolate_pieces_2d(control_points, u)
 
 
 def interpolate_grid_3d(grid, u):
@@ -129,49 +108,23 @@ def interpolate_grid_3d(grid, u):
     if grid.ndim == 3:
         grid = einops.rearrange(grid, 'd h w -> 1 d h w')
     _, n_samples_d, n_samples_h, n_samples_w = grid.shape
-    u = torch.clamp(u, min=0, max=1)
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_3d(grid)
 
-    # find indices for control points in each dimension
-    dd = 1 / (n_samples_d - 1)
-    dh = 1 / (n_samples_h - 1)
-    dw = 1 / (n_samples_w - 1)
-    grid_u_d = generate_sample_positions_for_padded_grid_1d(n_samples_d)
-    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
-    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
-    control_point_idx_d = find_control_point_idx_1d(
-        sample_positions=grid_u_d, query_points=u[:, 0]
-    )
-    control_point_idx_h = find_control_point_idx_1d(
-        sample_positions=grid_u_h, query_points=u[:, 1]
-    )
-    control_point_idx_w = find_control_point_idx_1d(
-        sample_positions=grid_u_w, query_points=u[:, 2]
-    )
+    # find control point indices and interpolation coordinate in each dim
+    idx_d, u_d = grid_interpolant_to_interpolation_data_1d(u[:, 0], n_samples_d)
+    idx_h, u_h = grid_interpolant_to_interpolation_data_1d(u[:, 1], n_samples_h)
+    idx_w, u_w = grid_interpolant_to_interpolation_data_1d(u[:, 2], n_samples_w)
 
-    # how far into the interpolation interval is each query point
-    s1_idx_d = control_point_idx_d[:, 1]
-    s1_idx_h = control_point_idx_h[:, 1]
-    s1_idx_w = control_point_idx_w[:, 1]
-    s1_d = grid_u_d[s1_idx_d]
-    s1_h = grid_u_h[s1_idx_h]
-    s1_w = grid_u_w[s1_idx_w]
-    interpolation_u_d = (u[:, 0] - s1_d) / dd
-    interpolation_u_h = (u[:, 1] - s1_h) / dh
-    interpolation_u_w = (u[:, 2] - s1_w) / dw
-    interpolation_u = einops.rearrange(
-        [interpolation_u_d, interpolation_u_h, interpolation_u_w], 'dhw b -> b dhw'
-    )
-
-    # grid the control point indices and interpolate
-    idx_d = einops.repeat(control_point_idx_d, 'b d -> b d h w', h=4, w=4)
-    idx_h = einops.repeat(control_point_idx_h, 'b h -> b d h w', d=4, w=4)
-    idx_w = einops.repeat(control_point_idx_w, 'b w -> b d h w', d=4, h=4)
+    # construct (4, 4, 4) grids of control points and 3D interpolant then interpolate
+    idx_d = einops.repeat(idx_d, 'b d -> b d h w', h=4, w=4)
+    idx_h = einops.repeat(idx_h, 'b h -> b d h w', d=4, w=4)
+    idx_w = einops.repeat(idx_w, 'b w -> b d h w', d=4, h=4)
     control_points = grid[:, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4)
     control_points = einops.rearrange(control_points, 'c b d h w -> b c d h w')
-    return interpolate_pieces_3d(control_points, interpolation_u)
+    u = einops.rearrange([u_d, u_h, u_w], 'dhw b -> b dhw')
+    return interpolate_pieces_3d(control_points, u)
 
 
 def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
@@ -194,53 +147,23 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     """
     if grid.ndim == 4:
         grid = einops.rearrange(grid, 't d h w -> 1 t d h w')
-    _, n_samples_t, n_samples_d, n_samples_h, n_samples_w = grid.shape
-    u = torch.clamp(u, min=0, max=1)
+    _, t, d, h, w = grid.shape
 
     # expand grid to handle interpolation at edges
     grid = pad_grid_4d(grid)
 
-    # find indices for control points in each dimension
-    dt = 1 / (n_samples_t - 1)
-    dd = 1 / (n_samples_d - 1)
-    dh = 1 / (n_samples_h - 1)
-    dw = 1 / (n_samples_w - 1)
+    # find control point indices and interpolation coordinate in each dim
+    idx_t, u_t = grid_interpolant_to_interpolation_data_1d(u[:, 0], n_samples=t)
+    idx_d, u_d = grid_interpolant_to_interpolation_data_1d(u[:, 1], n_samples=d)
+    idx_h, u_h = grid_interpolant_to_interpolation_data_1d(u[:, 2], n_samples=h)
+    idx_w, u_w = grid_interpolant_to_interpolation_data_1d(u[:, 3], n_samples=w)
 
-    grid_u_t = generate_sample_positions_for_padded_grid_1d(n_samples_t)
-    grid_u_d = generate_sample_positions_for_padded_grid_1d(n_samples_d)
-    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
-    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
-    control_point_idx_t = find_control_point_idx_1d(grid_u_t, query_points=u[:, 0])
-    control_point_idx_d = find_control_point_idx_1d(grid_u_d, query_points=u[:, 1])
-    control_point_idx_h = find_control_point_idx_1d(grid_u_h, query_points=u[:, 2])
-    control_point_idx_w = find_control_point_idx_1d(grid_u_w, query_points=u[:, 3])
-
-    # how far into the interpolation interval is each query point
-    s1_idx_t = control_point_idx_t[:, 1]
-    s1_idx_d = control_point_idx_d[:, 1]
-    s1_idx_h = control_point_idx_h[:, 1]
-    s1_idx_w = control_point_idx_w[:, 1]
-    s1_u_t = grid_u_t[s1_idx_t]
-    s1_u_d = grid_u_d[s1_idx_d]
-    s1_u_h = grid_u_h[s1_idx_h]
-    s1_u_w = grid_u_w[s1_idx_w]
-    interpolation_u_t = (u[:, 0] - s1_u_t) / dt
-    interpolation_u_d = (u[:, 1] - s1_u_d) / dd
-    interpolation_u_h = (u[:, 2] - s1_u_h) / dh
-    interpolation_u_w = (u[:, 3] - s1_u_w) / dw
-    interpolation_u = [
-        interpolation_u_t,
-        interpolation_u_d,
-        interpolation_u_h,
-        interpolation_u_w
-    ]
-    interpolation_u = einops.rearrange(interpolation_u, 'tdhw b -> b tdhw')
-
-    # grid the control point indices and interpolate
-    idx_t = einops.repeat(control_point_idx_t, 'b t -> b t d h w', d=4, h=4, w=4)
-    idx_d = einops.repeat(control_point_idx_d, 'b d -> b t d h w', t=4, h=4, w=4)
-    idx_h = einops.repeat(control_point_idx_h, 'b h -> b t d h w', t=4, d=4, w=4)
-    idx_w = einops.repeat(control_point_idx_w, 'b w -> b t d h w', t=4, d=4, h=4)
+    # construct (4, 4, 4, 4) grids of control points and 4D interpolant then interpolate
+    idx_t = einops.repeat(idx_t, 'b t -> b t d h w', d=4, h=4, w=4)
+    idx_d = einops.repeat(idx_d, 'b d -> b t d h w', t=4, h=4, w=4)
+    idx_h = einops.repeat(idx_h, 'b h -> b t d h w', t=4, d=4, w=4)
+    idx_w = einops.repeat(idx_w, 'b w -> b t d h w', t=4, d=4, h=4)
     control_points = grid[:, idx_t, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4, 4)
     control_points = einops.rearrange(control_points, 'c b t d h w -> b c t d h w')
-    return interpolate_pieces_4d(control_points, interpolation_u)
+    u = einops.rearrange([u_t, u_d, u_h, u_w], 'tdhw b -> b tdhw')
+    return interpolate_pieces_4d(control_points, u)

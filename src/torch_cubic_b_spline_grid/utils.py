@@ -35,6 +35,7 @@ def generate_sample_positions_for_padded_grid_1d(n_samples: int) -> torch.Tensor
     sample_coordinates[-2] = 1 + epsilon
     return sample_coordinates
 
+
 def find_control_point_idx_1d(sample_positions: torch.Tensor, query_points: torch.Tensor):
     """Find indices of four control points required for cubic interpolation.
 
@@ -67,7 +68,7 @@ def find_control_point_idx_1d(sample_positions: torch.Tensor, query_points: torc
 
 
 def grid_interpolant_to_interpolation_data_1d(
-    u: torch.Tensor, n_samples: int
+    grid_interpolant: torch.Tensor, n_samples: int
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Find the necessary data for piecewise cubic interpolation on a padded grid.
 
@@ -85,21 +86,23 @@ def grid_interpolant_to_interpolation_data_1d(
 
     Parameters
     ----------
-    u: torch.Tensor
+    grid_interpolant: torch.Tensor
         `(b, )` batch of values in range [0, 1] covering the grid being interpolated.
     n_samples: int
         The number of samples on the grid being interpolated (prior to padding).
 
     Returns
     -------
-    control_point_idx, interpolation_coordinate
+    control_point_idx, interpolation_coordinate: Tuple[torch.Tensor, torch.Tensor]
+        The indices of control points `[p0, p1, p2, p3]` on a padded 1D grid and the
+        interpolation coordinate associated with the interval `[p1, p2]`.
     """
-    u = torch.clamp(u, min=0, max=1)
+    grid_interpolant = torch.clamp(grid_interpolant, min=0, max=1)
     grid_u = generate_sample_positions_for_padded_grid_1d(n_samples)
-    control_point_idx = find_control_point_idx_1d(grid_u, query_points=u)
+    control_point_idx = find_control_point_idx_1d(grid_u, query_points=grid_interpolant)
     u_p1 = grid_u[control_point_idx[:, 1]]
     du = 1 / (n_samples - 1)
-    interpolation_coordinate = (u - u_p1) / du
+    interpolation_coordinate = (grid_interpolant - u_p1) / du
     return control_point_idx, interpolation_coordinate
 
 
