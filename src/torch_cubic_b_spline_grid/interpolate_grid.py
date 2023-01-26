@@ -7,13 +7,15 @@ from torch_cubic_b_spline_grid.pad_grid import (
     pad_grid_3d,
     pad_grid_4d,
 )
-from torch_cubic_b_spline_grid.find_control_points import find_control_points_1d
 from torch_cubic_b_spline_grid.interpolate_pieces import (
     interpolate_pieces_1d,
     interpolate_pieces_2d,
     interpolate_pieces_3d,
     interpolate_pieces_4d,
 )
+from torch_cubic_b_spline_grid.utils import \
+    generate_sample_positions_for_padded_grid_1d, find_control_point_idx_1d, \
+    grid_interpolant_to_interpolation_data_1d
 
 
 def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
@@ -35,26 +37,18 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     """
     if grid.ndim == 1:
         grid = einops.rearrange(grid, 'w -> 1 w')
-    u = torch.clamp(u, min=0, max=1)
-    n_samples = grid.shape[-1]
+    _, n_samples_w = grid.shape
 
     # handle interpolation at edges by extending grid of control points according to
     # local gradients
     grid = pad_grid_1d(grid)
 
-    # find the correct four control points for each query point in u
-    du = 1 / (n_samples - 1)
-    grid_positions = torch.linspace(-du, 1 + du, steps=n_samples + 2)
-    control_point_idx = find_control_points_1d(
-        sample_positions=grid_positions, query_points=u
+    # find the control points for each grid interpolant
+    control_point_idx, interpolation_u = grid_interpolant_to_interpolation_data_1d(
+        u, n_samples=n_samples_w
     )
     control_points = grid[..., control_point_idx]  # (c, b, 4)
     control_points = einops.rearrange(control_points, 'c b p -> b c p')
-
-    # how far into the interpolation interval is each query point?
-    p1_idx = control_point_idx[:, 1]
-    u_p1 = grid_positions[p1_idx]
-    interpolation_u = (u - u_p1) / du
 
     # interpolate
     return interpolate_pieces_1d(control_points, interpolation_u)
@@ -87,12 +81,12 @@ def interpolate_grid_2d(grid: torch.Tensor, u: torch.Tensor):
     # find indices for the four control points in each dimension
     du_h = 1 / (n_samples_h - 1)
     du_w = 1 / (n_samples_w - 1)
-    grid_u_h = torch.linspace(-du_h, 1 + du_h, steps=n_samples_h + 2)
-    grid_u_w = torch.linspace(-du_w, 1 + du_w, steps=n_samples_w + 2)
-    control_point_idx_h = find_control_points_1d(
+    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
+    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
+    control_point_idx_h = find_control_point_idx_1d(
         sample_positions=grid_u_h, query_points=u[:, 0]
     )
-    control_point_idx_w = find_control_points_1d(
+    control_point_idx_w = find_control_point_idx_1d(
         sample_positions=grid_u_w, query_points=u[:, 1]
     )
 
@@ -144,16 +138,16 @@ def interpolate_grid_3d(grid, u):
     dd = 1 / (n_samples_d - 1)
     dh = 1 / (n_samples_h - 1)
     dw = 1 / (n_samples_w - 1)
-    grid_u_d = torch.linspace(-dd, 1 + dd, steps=n_samples_d + 2)
-    grid_u_h = torch.linspace(-dh, 1 + dh, steps=n_samples_h + 2)
-    grid_u_w = torch.linspace(-dw, 1 + dw, steps=n_samples_w + 2)
-    control_point_idx_d = find_control_points_1d(
+    grid_u_d = generate_sample_positions_for_padded_grid_1d(n_samples_d)
+    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
+    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
+    control_point_idx_d = find_control_point_idx_1d(
         sample_positions=grid_u_d, query_points=u[:, 0]
     )
-    control_point_idx_h = find_control_points_1d(
+    control_point_idx_h = find_control_point_idx_1d(
         sample_positions=grid_u_h, query_points=u[:, 1]
     )
-    control_point_idx_w = find_control_points_1d(
+    control_point_idx_w = find_control_point_idx_1d(
         sample_positions=grid_u_w, query_points=u[:, 2]
     )
 
@@ -212,36 +206,28 @@ def interpolate_grid_4d(grid: torch.Tensor, u: torch.Tensor):
     dh = 1 / (n_samples_h - 1)
     dw = 1 / (n_samples_w - 1)
 
-    grid_u_t = torch.linspace(-dt, 1 + dt, steps=n_samples_t + 2)
-    grid_u_d = torch.linspace(-dd, 1 + dd, steps=n_samples_d + 2)
-    grid_u_h = torch.linspace(-dh, 1 + dh, steps=n_samples_h + 2)
-    grid_u_w = torch.linspace(-dw, 1 + dw, steps=n_samples_w + 2)
-    control_point_idx_t = find_control_points_1d(
-        sample_positions=grid_u_t, query_points=u[:, 0]
-    )
-    control_point_idx_d = find_control_points_1d(
-        sample_positions=grid_u_d, query_points=u[:, 1]
-    )
-    control_point_idx_h = find_control_points_1d(
-        sample_positions=grid_u_h, query_points=u[:, 2]
-    )
-    control_point_idx_w = find_control_points_1d(
-        sample_positions=grid_u_w, query_points=u[:, 3]
-    )
+    grid_u_t = generate_sample_positions_for_padded_grid_1d(n_samples_t)
+    grid_u_d = generate_sample_positions_for_padded_grid_1d(n_samples_d)
+    grid_u_h = generate_sample_positions_for_padded_grid_1d(n_samples_h)
+    grid_u_w = generate_sample_positions_for_padded_grid_1d(n_samples_w)
+    control_point_idx_t = find_control_point_idx_1d(grid_u_t, query_points=u[:, 0])
+    control_point_idx_d = find_control_point_idx_1d(grid_u_d, query_points=u[:, 1])
+    control_point_idx_h = find_control_point_idx_1d(grid_u_h, query_points=u[:, 2])
+    control_point_idx_w = find_control_point_idx_1d(grid_u_w, query_points=u[:, 3])
 
     # how far into the interpolation interval is each query point
     s1_idx_t = control_point_idx_t[:, 1]
     s1_idx_d = control_point_idx_d[:, 1]
     s1_idx_h = control_point_idx_h[:, 1]
     s1_idx_w = control_point_idx_w[:, 1]
-    s1_t = grid_u_t[s1_idx_t]
-    s1_d = grid_u_d[s1_idx_d]
-    s1_h = grid_u_h[s1_idx_h]
-    s1_w = grid_u_w[s1_idx_w]
-    interpolation_u_t = (u[:, 0] - s1_t) / dt
-    interpolation_u_d = (u[:, 1] - s1_d) / dd
-    interpolation_u_h = (u[:, 2] - s1_h) / dh
-    interpolation_u_w = (u[:, 3] - s1_w) / dw
+    s1_u_t = grid_u_t[s1_idx_t]
+    s1_u_d = grid_u_d[s1_idx_d]
+    s1_u_h = grid_u_h[s1_idx_h]
+    s1_u_w = grid_u_w[s1_idx_w]
+    interpolation_u_t = (u[:, 0] - s1_u_t) / dt
+    interpolation_u_d = (u[:, 1] - s1_u_d) / dd
+    interpolation_u_h = (u[:, 2] - s1_u_h) / dh
+    interpolation_u_w = (u[:, 3] - s1_u_w) / dw
     interpolation_u = [
         interpolation_u_t,
         interpolation_u_d,
