@@ -15,7 +15,7 @@ This is a PyTorch implementation of the model used in
 [Warp](http://warpem.com/warp/#) for continuous deformation
 fields and locally variable optical parameters in cryo-EM images.
 
-The approach is eloquently described in
+The approach is described in
 [Dimitry Tegunov's paper](https://doi.org/10.1038/s41592-019-0580-y):
 
 > Many methods in Warp are based on a continuous parametrization of 1- to
