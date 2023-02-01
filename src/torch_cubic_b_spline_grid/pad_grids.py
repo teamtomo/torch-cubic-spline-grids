@@ -15,6 +15,11 @@ def pad_grid_1d(grid: torch.Tensor):
     padded_grid: torch.Tensor
         `(..., w+2)` padded array.
     """
+    # remove singleton dimension if necessary
+    w = grid.shape[-1]
+    if w == 1:
+        grid = einops.repeat(grid, '... w -> ... (repeat w)', repeat=2)
+
     # find values for padding at each end of width dim
     start = grid[..., 0] - (grid[..., 1] - grid[..., 0])
     end = grid[..., -1] + (grid[..., -1] - grid[..., -2])
@@ -45,6 +50,10 @@ def pad_grid_2d(grid: torch.Tensor) -> torch.Tensor:
     padded_grid: torch.Tensor
         `(..., h+2, w+2)` padded array.
     """
+    # remove singleton dimension if necessary
+    h = grid.shape[-2]
+    if h == 1:
+        grid = einops.repeat(grid, '... h w -> ... (repeat h) w', repeat=2)
     grid = pad_grid_1d(grid)  # pad width dim (..., h, w+2)
 
     # find values for padding at each end of height dim
@@ -73,6 +82,11 @@ def pad_grid_3d(grid: torch.Tensor) -> torch.Tensor:
     padded_grid: torch.Tensor
         `(..., d+2, h+2, w+2)` padded array.
     """
+    # remove singleton dimension if necessary
+    d = grid.shape[-3]
+    if d == 1:
+        grid = einops.repeat(grid, '... d h w -> ... (repeat d) h w', repeat=2)
+
     # pad in height and width dims
     grid = pad_grid_2d(grid)
 
@@ -100,6 +114,11 @@ def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
     padded_grid: torch.Tensor
         `(..., t+2, d+2, h+2, w+2)` grid
     """
+    # remove singleton dimension if necessary
+    t = grid.shape[-4]
+    if t == 1:
+        grid = einops.repeat(grid, '... t d h w -> ... (repeat t) d h w', repeat=2)
+
     # pad in height and width dims
     grid = pad_grid_3d(grid)  # (..., t, d+2, h+2, w+2)
 

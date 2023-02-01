@@ -41,6 +41,14 @@ def test_calling_1d_grid():
         assert torch.allclose(result, expected)
 
 
+def test_1d_grid_with_singleton_dimension():
+    """Test that a 2D grid with a singleton dimension can be used."""
+    # singleton in width dim
+    grid = CubicBSplineGrid1d(resolution=1)
+    result = grid(0.5)
+    assert torch.allclose(result, torch.tensor([0.0]))
+
+
 def test_2d_grid_direct_instantiation():
     grid = CubicBSplineGrid2d()
     assert isinstance(grid, CubicBSplineGrid2d)
@@ -67,6 +75,19 @@ def test_calling_2d_grid():
     for arg in ([0.5, 0.5], torch.tensor([0.5, 0.5])):
         result = grid(arg)
         assert torch.allclose(result, expected)
+
+
+def test_2d_grid_with_singleton_dimension():
+    """Test that a 2D grid with a singleton dimension can be used."""
+    # singleton in width dim
+    grid = CubicBSplineGrid2d(resolution=(2, 1))
+    result = grid([0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0]))
+
+    # singleton in height dim
+    grid = CubicBSplineGrid2d(resolution=(1, 2))
+    result = grid([0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0]))
 
 
 def test_3d_grid_direct_instantiation():
@@ -97,6 +118,24 @@ def test_calling_3d_grid():
         assert torch.allclose(result, expected)
 
 
+def test_3d_grid_with_singleton_dimension():
+    """Test that a 3D grid with a singleton dimension can be used."""
+    # singleton in width dim
+    grid = CubicBSplineGrid3d(resolution=(2, 2, 1))
+    result = grid([0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0]))
+
+    # singleton in height dim
+    grid = CubicBSplineGrid3d(resolution=(2, 1, 2))
+    result = grid([0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0]))
+
+    # singleton in depth dim
+    grid = CubicBSplineGrid3d(resolution=(1, 2, 2))
+    result = grid([0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0]))
+
+
 def test_4d_grid_direct_instantiation():
     grid = CubicBSplineGrid4d()
     assert isinstance(grid, CubicBSplineGrid4d)
@@ -123,3 +162,31 @@ def test_calling_4d_grid():
     for arg in ([0.5, 0.5, 0.5, 0.5], torch.tensor([0.5, 0.5, 0.5, 0.5])):
         result = grid(arg)
         assert torch.allclose(result, expected)
+
+
+def test_4d_grid_with_singleton_dimension():
+    """Test that a 4D grid with a singleton dimension can be used."""
+    # singleton in width dim
+    grid = CubicBSplineGrid4d(resolution=(2, 2, 2, 1))
+    result = grid([0.5, 0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0, 0.0]))
+
+    # singleton in height dim
+    grid = CubicBSplineGrid4d(resolution=(2, 2, 1, 2))
+    result = grid([0.5, 0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0, 0.0]))
+
+    # singleton in depth dim
+    grid = CubicBSplineGrid4d(resolution=(2, 1, 2, 2))
+    result = grid([0.5, 0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0, 0.0]))
+
+    # singleton in time dim
+    grid = CubicBSplineGrid4d(resolution=(1, 2, 2, 2))
+    result = grid([0.5, 0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0, 0.0]))
+
+    # multiple singletons
+    grid = CubicBSplineGrid4d(resolution=(1, 1, 1, 1))
+    result = grid([0.5, 0.5, 0.5, 0.5])
+    assert torch.allclose(result, torch.tensor([0.0, 0.0, 0.0, 0.0]))

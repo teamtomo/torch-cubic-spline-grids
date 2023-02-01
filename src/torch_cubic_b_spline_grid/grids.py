@@ -3,7 +3,7 @@ from typing import Tuple, Callable, Union, Sequence, Optional
 
 import torch
 
-from torch_cubic_b_spline_grid.interpolate_grid import (
+from torch_cubic_b_spline_grid.interpolate_grids import (
     interpolate_grid_1d as _interpolate_grid_1d,
     interpolate_grid_2d as _interpolate_grid_2d,
     interpolate_grid_3d as _interpolate_grid_3d,

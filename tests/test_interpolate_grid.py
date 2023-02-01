@@ -1,6 +1,6 @@
 import torch
 
-from torch_cubic_b_spline_grid import interpolate_grid
+from torch_cubic_b_spline_grid import interpolate_grids
 
 
 def test_interpolate_grid_1d():
