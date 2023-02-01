@@ -3,7 +3,7 @@ from typing import Tuple
 import einops
 import torch
 
-from torch_cubic_b_spline_grid.pad_grid import pad_grid_1d
+from torch_cubic_b_spline_grid.pad_grids import pad_grid_1d
 
 
 def generate_sample_positions_for_padded_grid_1d(n_samples: int) -> torch.Tensor:
@@ -67,8 +67,8 @@ def find_control_point_idx_1d(sample_positions: torch.Tensor, query_points: torc
     return einops.rearrange([s0_idx, s1_idx, s2_idx, s3_idx], 's b -> b s')
 
 
-def grid_interpolant_to_interpolation_data_1d(
-    grid_interpolant: torch.Tensor, n_samples: int
+def interpolants_to_interpolation_data_1d(
+    interpolants: torch.Tensor, n_samples: int
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Find the necessary data for piecewise cubic interpolation on a padded grid.
 
@@ -86,8 +86,8 @@ def grid_interpolant_to_interpolation_data_1d(
 
     Parameters
     ----------
-    grid_interpolant: torch.Tensor
-        `(b, )` batch of values in range [0, 1] covering the grid being interpolated.
+    interpolants: torch.Tensor
+        `(b, )` batch of values in range [0, 1] covering the dimension being interpolated.
     n_samples: int
         The number of samples on the grid being interpolated (prior to padding).
 
@@ -97,12 +97,20 @@ def grid_interpolant_to_interpolation_data_1d(
         The indices of control points `[p0, p1, p2, p3]` on a padded 1D grid and the
         interpolation coordinate associated with the interval `[p1, p2]`.
     """
-    grid_interpolant = torch.clamp(grid_interpolant, min=0, max=1)
-    grid_u = generate_sample_positions_for_padded_grid_1d(n_samples)
-    control_point_idx = find_control_point_idx_1d(grid_u, query_points=grid_interpolant)
-    u_p1 = grid_u[control_point_idx[:, 1]]
-    du = 1 / (n_samples - 1)
-    interpolation_coordinate = (grid_interpolant - u_p1) / du
+    interpolants = torch.clamp(interpolants, min=0, max=1)
+    if n_samples > 1:
+        grid_u = generate_sample_positions_for_padded_grid_1d(n_samples)
+        control_point_idx = find_control_point_idx_1d(grid_u, query_points=interpolants)
+        u_p1 = grid_u[control_point_idx[:, 1]]
+        du = 1 / (n_samples - 1)
+        interpolation_coordinate = (interpolants - u_p1) / du
+    else:
+        control_point_idx = einops.repeat(
+            torch.tensor([0, 1, 2, 3]), 'p -> b p', b=len(interpolants)
+        )
+        interpolation_coordinate = einops.repeat(
+            torch.tensor([0.5]), '1 -> b', b=len(interpolants)
+        )
     return control_point_idx, interpolation_coordinate
 
 
