@@ -18,7 +18,7 @@ def test_1d_grid_direct_instantiation():
     assert isinstance(grid, CubicBSplineGrid1d)
     assert grid.data.shape == (3, 5)
 
-    grid = CubicBSplineGrid1d(resolution=(5, ), n_channels=3)
+    grid = CubicBSplineGrid1d(resolution=(5,), n_channels=3)
     assert isinstance(grid, CubicBSplineGrid1d)
     assert grid.data.shape == (3, 5)
 
@@ -27,7 +27,7 @@ def test_1d_grid_instantiation_from_existing_data():
     """Test grid instantiation from existing data."""
     grid = CubicBSplineGrid1d.from_grid_data(data=torch.zeros(3, 5))
     assert grid.ndim == 1
-    assert grid.resolution == (5, )
+    assert grid.resolution == (5,)
     assert grid.n_channels == 3
     assert isinstance(grid._data, torch.nn.Parameter)
 
