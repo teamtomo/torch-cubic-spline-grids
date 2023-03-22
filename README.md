@@ -18,7 +18,7 @@ parametrisations of 1-4D spaces.
 `torch_cubic_spline_grids` provides a set of PyTorch components called grids.
 
 Grids are defined by
-- their dimensionality (1D, 2D, 3D, 4D...)
+- their dimensionality (1d, 2d, 3d, 4d...)
 - the number of points covering each dimension (`resolution`)
 - the number of values stored on each grid point (`n_channels`)
 - how we interpolate between values on grid points
