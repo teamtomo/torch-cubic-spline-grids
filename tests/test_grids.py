@@ -49,6 +49,22 @@ def test_1d_grid_with_singleton_dimension():
     assert torch.allclose(result, torch.tensor([0.0]))
 
 
+def test_calling_1d_grid_with_stacked_coords():
+    """Test calling a 1d grid with a multidimensional array of coordinates."""
+    grid = CubicBSplineGrid1d(resolution=1)
+    h, w = 4, 4
+
+    # no explicit coordinate dimension
+    result = grid(torch.rand(size=(h, w)))
+    assert result.shape == (h, w)
+    assert torch.allclose(result, torch.tensor([0]).float())
+
+    # with explicit coordinate dimension
+    result = grid(torch.rand(size=(h, w, 1)))
+    assert result.shape == (h, w, 1)
+    assert torch.allclose(result, torch.tensor([0]).float())
+
+
 def test_2d_grid_direct_instantiation():
     grid = CubicBSplineGrid2d()
     assert isinstance(grid, CubicBSplineGrid2d)
@@ -90,6 +106,17 @@ def test_2d_grid_with_singleton_dimension():
     assert torch.allclose(result, torch.tensor([0.0, 0.0]))
 
 
+def test_calling_2d_grid_with_stacked_coordinates():
+    """Test calling a 2D grid with stacked coordinates."""
+    grid = CubicBSplineGrid2d(resolution=(2, 2), n_channels=1)
+    result = grid(torch.rand(size=(5, 5, 2)))
+    assert result.shape == (5, 5, 1)
+
+    grid = CubicBSplineGrid2d(resolution=(2, 2), n_channels=2)
+    result = grid(torch.rand(size=(5, 5, 2)))
+    assert result.shape == (5, 5, 2)
+
+
 def test_3d_grid_direct_instantiation():
     grid = CubicBSplineGrid3d()
     assert isinstance(grid, CubicBSplineGrid3d)
@@ -116,6 +143,14 @@ def test_calling_3d_grid():
     for arg in ([0.5, 0.5, 0.5], torch.tensor([0.5, 0.5, 0.5])):
         result = grid(arg)
         assert torch.allclose(result, expected)
+
+
+def test_calling_3d_grid_with_stacked_coordinates():
+    """Test calling 3d grid with stacked coordinates."""
+    grid = CubicBSplineGrid3d()
+    d, h, w = 4, 4, 4
+    result = grid(torch.rand(size=(d, h, w, 3)))
+    assert result.shape == (d, h, w, 1)
 
 
 def test_3d_grid_with_singleton_dimension():
@@ -162,6 +197,14 @@ def test_calling_4d_grid():
     for arg in ([0.5, 0.5, 0.5, 0.5], torch.tensor([0.5, 0.5, 0.5, 0.5])):
         result = grid(arg)
         assert torch.allclose(result, expected)
+
+
+def test_calling_4d_grid_with_stacked_coordinates():
+    """Test calling 3d grid with stacked coordinates."""
+    grid = CubicBSplineGrid4d()
+    t, d, h, w = 2, 4, 4, 4
+    result = grid(torch.rand(size=(t, d, h, w, 4)))
+    assert result.shape == (t, d, h, w, 1)
 
 
 def test_4d_grid_with_singleton_dimension():

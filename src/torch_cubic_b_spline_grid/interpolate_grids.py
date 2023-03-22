@@ -26,7 +26,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     grid: torch.Tensor
         `(c, w)` array of `w` values in `c` channels to be interpolated.
     u: torch.Tensor
-        `(b, )` array of query points in the range `[0, 1]` covering the `w`
+        `(b, 1)` array of query points in the range `[0, 1]` covering the `w`
         dimension of `grid`.
     Returns
     -------
@@ -42,7 +42,7 @@ def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor):
     grid = pad_grid_1d(grid)
 
     # find control point indices and interpolation coordinate
-    idx, u = interpolants_to_interpolation_data_1d(u, n_samples=w)
+    idx, u = interpolants_to_interpolation_data_1d(u[:, 0], n_samples=w)
     control_points = grid[..., idx]  # (c, b, 4)
     control_points = einops.rearrange(control_points, 'c b p -> b c p')
 
