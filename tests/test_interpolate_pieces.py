@@ -1,26 +1,29 @@
 import torch
 
 from torch_cubic_b_spline_grid import interpolate_pieces
-from torch_cubic_b_spline_grid.constants import CUBIC_B_SPLINE_MATRIX
+from torch_cubic_b_spline_grid._constants import CUBIC_B_SPLINE_MATRIX
 
 
 def test_interpolate_pieces_1d():
     """test that cubic B-spline interpolation results in expected values."""
-    u = 0.5
+    t = 0.5
     points = torch.tensor([-1.5, 5.1, 2.2, 6.8])
     result = interpolate_pieces.interpolate_pieces_1d(
         control_points=points.view(1, 1, 4),  # (b, c, 4)
-        u=torch.tensor([u])
+        t=torch.tensor([t]),
+        matrix=CUBIC_B_SPLINE_MATRIX,
     )
-    expected = torch.tensor([1, u, u ** 2, u ** 3]) @ CUBIC_B_SPLINE_MATRIX @ points
+    expected = torch.tensor([1, t, t ** 2, t ** 3]) @ CUBIC_B_SPLINE_MATRIX @ points
     assert torch.allclose(result, expected)
 
 
 def test_interpolate_pieces_1d_with_batched_queries():
     """test batched evaluation over one 'piece' (set of 4 control points)."""
     pieces = torch.tensor([[0, 1, 2, 3]]).float().view(1, 1, 4)  # (b, c, 4)
-    u = torch.tensor([0, 0.5, 1])  # (b, )
-    result = interpolate_pieces.interpolate_pieces_1d(pieces, u)
+    t = torch.tensor([0, 0.5, 1])  # (b, )
+    result = interpolate_pieces.interpolate_pieces_1d(
+        pieces, t, matrix=CUBIC_B_SPLINE_MATRIX
+    )
 
     # cubic b spline intepolation should be equivalent to linear interpolation
     # for four control points on the same line
@@ -34,8 +37,10 @@ def test_interpolate_pieces_1d_with_batched_pieces_and_queries():
         [[0, 1, 2, 3],
          [2, 3, 4, 5]]
     ).float().view(2, 1, 4)  # (b, c, 4)
-    u = torch.tensor([0.5, 0.5])  # (b, )
-    result = interpolate_pieces.interpolate_pieces_1d(pieces, u)  # (b, c)
+    t = torch.tensor([0.5, 0.5])  # (b, )
+    result = interpolate_pieces.interpolate_pieces_1d(
+        pieces, t, matrix=CUBIC_B_SPLINE_MATRIX
+    )  # (b, c)
 
     # cubic b spline intepolation should be equivalent to linear interpolation
     # for four control points on the same line
@@ -51,8 +56,10 @@ def test_interpolate_pieces_2d():
          [8, 9, 10, 11],
          [12, 13, 14, 15]]
     ).float().view(1, 1, 4, 4)
-    u = torch.tensor([0.5, 0.5]).view(1, 2)
-    result = interpolate_pieces.interpolate_pieces_2d(control_points, u)
+    t = torch.tensor([0.5, 0.5]).view(1, 2)
+    result = interpolate_pieces.interpolate_pieces_2d(
+        control_points, t, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([7.5])
     assert torch.allclose(result, expected)
 
@@ -77,8 +84,10 @@ def test_interpolate_pieces_3d():
           [56, 57, 58, 59],
           [60, 61, 62, 63]]],
     ).float().view(1, 1, 4, 4, 4)
-    u = torch.tensor([[0.5, 0.5, 0.5]]).view(1, 3)
-    result = interpolate_pieces.interpolate_pieces_3d(control_points, u)
+    t = torch.tensor([[0.5, 0.5, 0.5]]).view(1, 3)
+    result = interpolate_pieces.interpolate_pieces_3d(
+        control_points, t, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([31.5])
     assert torch.allclose(result, expected)
 
@@ -151,7 +160,9 @@ def test_interpolate_pieces_4d():
            [248, 249, 250, 251],
            [252, 253, 254, 255]]]]
     ).float().view(1, 1, 4, 4, 4, 4)
-    u = torch.tensor([0.5, 0.5, 0.5, 0.5]).view(1, 4)
-    result = interpolate_pieces.interpolate_pieces_4d(control_points, u)
+    t = torch.tensor([0.5, 0.5, 0.5, 0.5]).view(1, 4)
+    result = interpolate_pieces.interpolate_pieces_4d(
+        control_points, t, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([127.5])
     assert torch.allclose(result, expected)

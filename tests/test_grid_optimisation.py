@@ -123,7 +123,7 @@ def test_4d_grid_optimisation():
 
     _x = torch.linspace(0, 1, steps=10)
     x = torch.meshgrid(_x, _x, _x, _x, indexing='xy')
-    x = einops.rearrange([*x], 'xyz t d h w -> (t d h w) xyz')
+    x = einops.rearrange([*x], 'xyz u d h w -> (u d h w) xyz')
     ground_truth = f(x)
     prediction = grid(x).squeeze()
     mean_absolute_error = torch.mean(torch.abs(prediction - ground_truth))
