@@ -58,21 +58,6 @@ interpolants = grid(coords)
 
 - `interpolants.shape` is `(10, 1)`
 
-### Types of grids
-
-`torch_cubic_spline_grids` provides grids which can be interpolated with **cubic 
-B-spline** interpolation or **cubic Catmull-Rom spline** interpolation. 
-
-| interpolation      | continuity | interpolating? |
-|--------------------|------------|----------------|
-| cubic B-spline     | C2         | No             |
-| Catmull-Rom spline | C1         | Yes            |
-
-If your application requires that the result intersects the data on the grid you should
-use the Catmull-Rom spline grids `CubicCatmullRomGrid1d/2d/3d/4d`. 
-If you require continuous second derivatives `CubicBSplineGrid1d/2d/3d/4d` is more 
-suitable.
-
 ### Optimisation
 
 By minimising a loss function associated with grid interpolants the values at each 
@@ -83,17 +68,43 @@ grid point can be optimised to more accurately describe the 1-4D space.
 </p>
 
 The image above shows the values of 6 control points on a 1D grid being optimised such 
-that interpolating between them approximates a single oscillation of a sine wave. 
+that interpolating between them with cubic B-spline interpolation approximates a single oscillation of a sine wave. 
 
 Notebooks are available for this 
 [1D example](./examples/optimise_1d_grid.ipynb) 
 and a similar 
 [2D example](./examples/optimise_2d_grid.ipynb).
 
+### Types of grids
+
+`torch_cubic_spline_grids` provides grids which can be interpolated with **cubic 
+B-spline** interpolation or **cubic Catmull-Rom spline** interpolation. 
+
+| interpolation      | continuity | interpolating? |
+|--------------------|------------|----------------|
+| cubic B-spline     | C2         | No             |
+| Catmull-Rom spline | C1         | Yes            |
+
+If your need the resulting curve to intersect the data on the grid you should
+use the cubic Catmull-Rom spline grids 
+
+- `CubicCatmullRomGrid1d`
+- `CubicCatmullRomGrid2d`
+- `CubicCatmullRomGrid3d`
+- `CubicCatmullRomGrid4d`
+
+If you require continuous second derivatives then the cubic B-spline grids are more 
+suitable.
+
+- `CubicBSplineGrid1d`
+- `CubicBSplineGrid2d`
+- `CubicBSplineGrid3d`
+- `CubicBSplineGrid4d`
+
 ### Regularisation
 
 The number of points in each dimension should be chosen such that interpolating on the 
-grid can approximate the underlying phenomenon without overfitting. 
+grid can approximate the underlying phenomenon being modelled without overfitting. 
 A low resolution grid provides a regularising effect by smoothing the model.
 
 
