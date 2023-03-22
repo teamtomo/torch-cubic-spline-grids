@@ -10,6 +10,7 @@ class CubicSplineGrid(torch.nn.Module):
     """Base class for continuous parametrisations of multidimensional spaces."""
     resolution: Tuple[int, ...]
     ndim: int
+    n_channels: int
     _data: torch.nn.Parameter
     _interpolation_function: Callable
 

@@ -15,7 +15,96 @@ parametrisations of 1-4D spaces.
 
 ## Overview
 
-`torch_cubic_spline_grids` provides a set of PyTorch 
+`torch_cubic_spline_grids` provides a set of PyTorch components called grids.
+
+Grids are defined by
+- their dimensionality (1D, 2D, 3D, 4D...)
+- the number of points covering each dimension (`resolution`)
+- the number of values stored on each grid point (`n_channels`)
+- how we interpolate between values on grid points
+
+All grids in this package consist of uniformly spaced points covering the full 
+extend of each dimension.
+
+### First steps
+Let's make a simple 2D grid with one value on each grid point.
+
+```python
+import torch
+from torch_cubic_spline_grids import CubicBSplineGrid2d
+
+grid = CubicBSplineGrid2d(resolution=(5, 3), n_channels=1)
+```
+
+- `grid.ndim` is `2`
+- `grid.resolution` is `(5, 3)` (or `(h, w)`) 
+- `grid.n_channels` is `1`
+- `grid.data.shape` is `(1, 5, 3)` (or `(c, h, w)`)
+
+In words, the grid extends over two dimensions `(h, w)` with 5 points 
+in `h` and `3` points in `w`. 
+There is one value stored at each point on the 2D grid. 
+The grid data is stored in a tensor of shape `(c, *grid_resolution)`.
+
+We can obtain the value (interpolant) at any continuous point on the grid.
+The grid coordinate system extends from `[0, 1]` along each grid dimension. 
+The interpolant is obtained by sequential application of
+cubic spline interpolation along each dimension of the grid.
+
+```python
+coords = torch.rand(size=(10, 2))  # values in [0, 1]
+interpolants = grid(coords)
+```
+
+- `interpolants.shape` is `(10, 1)`
+
+### Types of grids
+
+`torch_cubic_spline_grids` provides grids which can be interpolated with **cubic 
+B-spline** interpolation or **cubic Catmull-Rom spline** interpolation. 
+
+| interpolation      | continuity | interpolating? |
+|--------------------|------------|----------------|
+| cubic B-spline     | C2         | No             |
+| Catmull-Rom spline | C1         | Yes            |
+
+If your application requires that the result intersects the data on the grid you should
+use the Catmull-Rom spline grids `CubicCatmullRomGrid1d/2d/3d/4d`. 
+If you require continuous second derivatives `CubicBSplineGrid1d/2d/3d/4d` is more 
+suitable.
+
+### Optimisation
+
+By minimising a loss function associated with grid interpolants the values at each 
+grid point can be optimised to more accurately describe the 1-4D space.
+
+<p align="center" width="100%">
+    <img width="60%" src="https://user-images.githubusercontent.com/7307488/226992179-049a63a0-a2f3-4432-b38e-6e8bcaa6a4a8.png
+">
+</p>
+
+The image above shows the values of 6 control points on a 1D grid being optimised such 
+that interpolating between them approximates a single oscillation of a sine wave. 
+
+Notebooks are available for this 
+[1D example](./examples/optimise_1d_grid.ipynb) 
+and a similar 
+[2D example](./examples/optimise_2d_grid.ipynb).
+
+### Regularisation
+
+The number of points in each dimension should be chosen such that interpolating on the 
+grid can approximate the underlying phenomenon without overfitting. 
+A low resolution grid provides a regularising effect by smoothing the model.
+
+
+## Installation
+
+`torch_cubic_spline_grids` is available on PyPI
+
+```shell
+pip install torch-cubic-spline-grids
+```
 
 
 ## Related work
