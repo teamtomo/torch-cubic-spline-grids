@@ -70,7 +70,7 @@ class CubicBSplineGrid(torch.nn.Module):
         return tuple(self._data.shape[1:])
 
     def _coerce_to_batched_coordinates(self, u: torch.Tensor) -> Tuple[torch.Tensor, ]:
-        u = torch.as_tensor(u, dtype=torch.float32)
+        u = torch.atleast_1d(torch.as_tensor(u, dtype=torch.float32))
         self._input_is_coordinate_like = u.shape[-1] == self.ndim
         if self._input_is_coordinate_like is False and self.ndim == 1:
             u = einops.rearrange(u, '... -> ... 1')  # add singleton coord dimension
