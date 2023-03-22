@@ -80,7 +80,7 @@ and a similar
 `torch_cubic_spline_grids` provides grids which can be interpolated with **cubic 
 B-spline** interpolation or **cubic Catmull-Rom spline** interpolation. 
 
-| interpolation      | continuity | interpolating? |
+| spline             | continuity | interpolating? |
 |--------------------|------------|----------------|
 | cubic B-spline     | C2         | No             |
 | Catmull-Rom spline | C1         | Yes            |
