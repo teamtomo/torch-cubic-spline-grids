@@ -1,13 +1,16 @@
 import torch
 
 from torch_cubic_b_spline_grid import interpolate_grids
+from torch_cubic_b_spline_grid._constants import CUBIC_B_SPLINE_MATRIX
 
 
 def test_interpolate_grid_1d():
     """Check that 1d interpolation works as expected."""
     grid = torch.tensor([0, 1, 2, 3, 4, 5]).float()
     u = torch.tensor([0.5]).view((1, 1))
-    result = interpolate_grids.interpolate_grid_1d(grid, u)
+    result = interpolate_grids.interpolate_grid_1d(
+        grid, u, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([[2.5]])
     assert torch.allclose(result, expected)
 
@@ -17,7 +20,9 @@ def test_interpolate_grid_1d_approx():
     grid_x = torch.linspace(0, 2 * torch.pi, steps=50)
     grid_y = torch.sin(grid_x)
     sample_x = torch.linspace(0, 1, steps=1000).view((-1, 1))
-    sample_y = interpolate_grids.interpolate_grid_1d(grid_y, sample_x)
+    sample_y = interpolate_grids.interpolate_grid_1d(
+        grid_y, sample_x, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     ground_truth_y = torch.sin(sample_x * 2 * torch.pi)
     mean_absolute_error = torch.mean(torch.abs(sample_y - ground_truth_y))
     assert mean_absolute_error <= 0.01
@@ -32,7 +37,9 @@ def test_interpolate_grid_2d():
          [12, 13, 14, 15]]
     ).float()
     u = torch.tensor([0.5, 0.5]).view(1, 2)
-    result = interpolate_grids.interpolate_grid_2d(grid, u)
+    result = interpolate_grids.interpolate_grid_2d(
+        grid, u, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([7.5])
     assert torch.allclose(result, expected)
 
@@ -58,7 +65,8 @@ def test_interpolate_grid_3d():
           [60, 61, 62, 63]]],
     ).float()
     u = torch.tensor([[0.5, 0.5, 0.5]]).view(1, 3)
-    result = interpolate_grids.interpolate_grid_3d(grid, u)
+    result = interpolate_grids.interpolate_grid_3d(grid, u,
+                                                   matrix=CUBIC_B_SPLINE_MATRIX)
     expected = torch.tensor([31.5])
     assert torch.allclose(result, expected)
 
@@ -132,6 +140,8 @@ def test_interpolate_grid_4d():
            [252, 253, 254, 255]]]]
     ).float()
     u = torch.tensor([0.5, 0.5, 0.5, 0.5]).view(1, 4)
-    result = interpolate_grids.interpolate_grid_4d(grid, u)
+    result = interpolate_grids.interpolate_grid_4d(
+        grid, u, matrix=CUBIC_B_SPLINE_MATRIX
+    )
     expected = torch.tensor([127.5])
     assert torch.allclose(result, expected)

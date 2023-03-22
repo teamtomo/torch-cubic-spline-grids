@@ -106,21 +106,21 @@ def pad_grid_4d(grid: torch.Tensor) -> torch.Tensor:
     Parameters
     ----------
     grid: torch.Tensor
-        `(..., t, d, h, w)` array of values to be padded in time, depth, height and
+        `(..., u, d, h, w)` array of values to be padded in time, depth, height and
         width dimensions.
 
     Returns
     -------
     padded_grid: torch.Tensor
-        `(..., t+2, d+2, h+2, w+2)` grid
+        `(..., u+2, d+2, h+2, w+2)` grid
     """
     # remove singleton dimension if necessary
     t = grid.shape[-4]
     if t == 1:
-        grid = einops.repeat(grid, '... t d h w -> ... (repeat t) d h w', repeat=2)
+        grid = einops.repeat(grid, '... u d h w -> ... (repeat u) d h w', repeat=2)
 
     # pad in height and width dims
-    grid = pad_grid_3d(grid)  # (..., t, d+2, h+2, w+2)
+    grid = pad_grid_3d(grid)  # (..., u, d+2, h+2, w+2)
 
     # find values for padding at each end of time dim
     dt_start = grid[..., 1, :, :, :] - grid[..., 0, :, :, :]
