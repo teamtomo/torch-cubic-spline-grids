@@ -60,8 +60,8 @@ interpolants = grid(coords)
 
 ### Optimisation
 
-By minimising a loss function associated with grid interpolants the values at each 
-grid point can be optimised such that their interpolants more accurately describe the 1-4D space.
+Values at each grid point can be optimised by minimising a loss function associated with grid interpolants. 
+In this way the continuous space of the grid can be made to more accurately model a 1-4D space.
 
 <p align="center" width="100%">
     <img width="60%" src="https://user-images.githubusercontent.com/7307488/226992179-049a63a0-a2f3-4432-b38e-6e8bcaa6a4a8.png">
