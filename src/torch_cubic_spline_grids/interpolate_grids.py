@@ -1,19 +1,19 @@
 import einops
 import torch
 
-from torch_cubic_b_spline_grid.pad_grids import (
+from torch_cubic_spline_grids.pad_grids import (
     pad_grid_1d,
     pad_grid_2d,
     pad_grid_3d,
     pad_grid_4d,
 )
-from torch_cubic_b_spline_grid.interpolate_pieces import (
+from torch_cubic_spline_grids.interpolate_pieces import (
     interpolate_pieces_1d,
     interpolate_pieces_2d,
     interpolate_pieces_3d,
     interpolate_pieces_4d,
 )
-from torch_cubic_b_spline_grid.utils import interpolants_to_interpolation_data_1d
+from torch_cubic_spline_grids.utils import interpolants_to_interpolation_data_1d
 
 
 def interpolate_grid_1d(grid: torch.Tensor, u: torch.Tensor, matrix: torch.Tensor):

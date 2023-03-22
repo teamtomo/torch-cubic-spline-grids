@@ -1,6 +1,6 @@
 import torch
 
-from torch_cubic_b_spline_grid import pad_grids
+from torch_cubic_spline_grids import pad_grids
 
 
 def test_pad_1d():

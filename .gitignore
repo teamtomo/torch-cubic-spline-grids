@@ -104,5 +104,5 @@ ENV/
 # IDE settings
 .vscode/
 
-torch_cubic_b_spline_grid/_version.py
-src/torch_cubic_b_spline_grid/_version.py
+src/torch_cubic_spline_grids/_version.py
+src/torch_cubic_spline_grids/_version.py

@@ -5,8 +5,8 @@ build-backend = "hatchling.build"
 
 # https://peps.python.org/pep-0621/
 [project]
-name = "torch-cubic-b-spline-grid"
-description = "Cubic B-spline interpolation on multidimensional grids in PyTorch"
+name = "torch-cubic-spline-grids"
+description = "Cubic spline interpolation on multidimensional grids in PyTorch"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "BSD 3-Clause License"}
@@ -47,8 +47,8 @@ dev = [
 ]
 
 [project.urls]
-homepage = "https://github.com/alisterburt/torch-cubic-b-spline-grid"
-repository = "https://github.com/alisterburt/torch-cubic-b-spline-grid"
+homepage = "https://github.com/alisterburt/torch-cubic-spline-grids"
+repository = "https://github.com/alisterburt/torch-cubic-spline-grids"
 
 # same as console_scripts entry point
 # [project.scripts]
