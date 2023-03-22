@@ -90,6 +90,8 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.TWINE_API_KEY }}
 
       - uses: softprops/action-gh-release@v1
+        permissions:
+          contents: write
         with:
           generate_release_notes: true
 
