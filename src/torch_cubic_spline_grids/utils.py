@@ -3,7 +3,7 @@ from typing import Tuple
 import einops
 import torch
 
-from torch_cubic_b_spline_grid.pad_grids import pad_grid_1d
+from torch_cubic_spline_grids.pad_grids import pad_grid_1d
 
 
 def generate_sample_positions_for_padded_grid_1d(n_samples: int) -> torch.Tensor:

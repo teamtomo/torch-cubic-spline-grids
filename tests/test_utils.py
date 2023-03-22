@@ -1,6 +1,6 @@
 import torch
 
-from torch_cubic_b_spline_grid.utils import find_control_point_idx_1d
+from torch_cubic_spline_grids.utils import find_control_point_idx_1d
 
 
 def test_find_control_points():

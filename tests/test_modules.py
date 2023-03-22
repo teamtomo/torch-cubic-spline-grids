@@ -1,4 +1,4 @@
-from torch_cubic_b_spline_grid import (
+from torch_cubic_spline_grids import (
     CubicBSplineGrid1d,
     CubicBSplineGrid2d,
     CubicBSplineGrid3d,

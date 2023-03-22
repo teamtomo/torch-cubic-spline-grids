@@ -3,7 +3,7 @@ from typing import Tuple, Callable, Optional
 import einops
 import torch
 
-from torch_cubic_b_spline_grid.utils import coerce_to_multichannel_grid
+from torch_cubic_spline_grids.utils import coerce_to_multichannel_grid
 
 
 class CubicSplineGrid(torch.nn.Module):

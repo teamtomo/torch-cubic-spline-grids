@@ -1,7 +1,7 @@
 import torch
 
-from torch_cubic_b_spline_grid import interpolate_pieces
-from torch_cubic_b_spline_grid._constants import CUBIC_B_SPLINE_MATRIX
+from torch_cubic_spline_grids import interpolate_pieces
+from torch_cubic_spline_grids._constants import CUBIC_B_SPLINE_MATRIX
 
 
 def test_interpolate_pieces_1d():
