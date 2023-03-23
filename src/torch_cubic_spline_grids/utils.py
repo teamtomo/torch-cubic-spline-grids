@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Iterable
 
 import einops
 import torch
@@ -36,7 +36,8 @@ def generate_sample_positions_for_padded_grid_1d(n_samples: int) -> torch.Tensor
     return sample_coordinates
 
 
-def find_control_point_idx_1d(sample_positions: torch.Tensor, query_points: torch.Tensor):
+def find_control_point_idx_1d(sample_positions: torch.Tensor,
+                              query_points: torch.Tensor):
     """Find indices of four control points required for cubic interpolation.
 
     E.g. for sample positions `[0, 1, 2, 3, 4, 5]` and query point `2.5` the control
@@ -130,3 +131,8 @@ def coerce_to_multichannel_grid(grid: torch.Tensor, grid_ndim: int):
     return grid
 
 
+def batch(iterable: Iterable, n: int = 1) -> Iterable[Iterable]:
+    """Split an iterable into batches of constant length."""
+    l = len(iterable)
+    for idx in range(0, l, n):
+        yield iterable[idx:min(idx + n, l)]
