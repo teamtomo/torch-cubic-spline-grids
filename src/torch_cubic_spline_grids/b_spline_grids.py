@@ -25,11 +25,14 @@ class CubicBSplineGrid1d(CubicSplineGrid):
     def __init__(
         self,
         resolution: Optional[Union[int, Tuple[int]]] = None,
-        n_channels: int = 1
+        n_channels: int = 1,
+        minibatch_size: int = 1_000_000,
     ):
         if isinstance(resolution, int):
             resolution = tuple([resolution])
-        super().__init__(resolution, n_channels)
+        super().__init__(
+            resolution=resolution, n_channels=n_channels, minibatch_size=minibatch_size
+        )
 
 
 class CubicBSplineGrid2d(CubicSplineGrid):

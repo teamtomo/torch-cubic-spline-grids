@@ -3,7 +3,7 @@ from typing import Tuple, Callable, Optional
 import einops
 import torch
 
-from torch_cubic_spline_grids.utils import coerce_to_multichannel_grid
+from torch_cubic_spline_grids.utils import coerce_to_multichannel_grid, batch
 
 
 class CubicSplineGrid(torch.nn.Module):
@@ -13,26 +13,33 @@ class CubicSplineGrid(torch.nn.Module):
     n_channels: int
     _data: torch.nn.Parameter
     _interpolation_function: Callable
+    _minibatch_size: int
 
     def __init__(
         self,
         resolution: Optional[Tuple[int, ...]] = None,
-        n_channels: int = 1
+        n_channels: int = 1,
+        minibatch_size: int = 1_000_000,
     ):
         super().__init__()
         if resolution is None:
             resolution = [2] * self.ndim
         grid_shape = tuple([n_channels, *resolution])
         self.data = torch.zeros(size=grid_shape)
+        self._minibatch_size = minibatch_size
 
     def forward(self, u: torch.Tensor) -> torch.Tensor:
         u = self._coerce_to_batched_coordinates(u)  # (b, d)
-        interpolated = self._interpolation_function(self._data, u)
+        interpolated = [
+            self._interpolation_function(self._data, minibatch)
+            for minibatch in batch(u, n=self._minibatch_size)
+        ]  # List[Tensor[(b, d)]]
+        interpolated = torch.cat(interpolated, dim=0)  # (b, d)
         return self._unpack_interpolated_output(interpolated)
 
     @classmethod
     def from_grid_data(cls, data: torch.Tensor):
-        """
+        """Instantiate a grid from existing grid data
 
         Parameters
         ----------
@@ -61,7 +68,7 @@ class CubicSplineGrid(torch.nn.Module):
     def resolution(self) -> Tuple[int, ...]:
         return tuple(self._data.shape[1:])
 
-    def _coerce_to_batched_coordinates(self, u: torch.Tensor) -> Tuple[torch.Tensor, ]:
+    def _coerce_to_batched_coordinates(self, u: torch.Tensor) -> Tuple[torch.Tensor,]:
         u = torch.atleast_1d(torch.as_tensor(u, dtype=torch.float32))
         self._input_is_coordinate_like = u.shape[-1] == self.ndim
         if self._input_is_coordinate_like is False and self.ndim == 1:
