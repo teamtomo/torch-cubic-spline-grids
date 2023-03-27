@@ -13,6 +13,7 @@ class CubicSplineGrid(torch.nn.Module):
     n_channels: int
     _data: torch.nn.Parameter
     _interpolation_function: Callable
+    _interpolation_matrix: torch.Tensor
     _minibatch_size: int
 
     def __init__(
@@ -27,12 +28,19 @@ class CubicSplineGrid(torch.nn.Module):
         grid_shape = tuple([n_channels, *resolution])
         self.data = torch.zeros(size=grid_shape)
         self._minibatch_size = minibatch_size
+        self.register_buffer(
+            name='interpolation_matrix',
+            tensor=self._interpolation_matrix,
+            persistent=False
+        )
 
     def forward(self, u: torch.Tensor) -> torch.Tensor:
         u = self._coerce_to_batched_coordinates(u)  # (b, d)
         interpolated = [
-            self._interpolation_function(self._data, minibatch)
-            for minibatch in batch(u, n=self._minibatch_size)
+            self._interpolation_function(
+                self._data, minibatch_u, matrix=self._interpolation_matrix
+            )
+            for minibatch_u in batch(u, n=self._minibatch_size)
         ]  # List[Tensor[(b, d)]]
         interpolated = torch.cat(interpolated, dim=0)  # (b, d)
         return self._unpack_interpolated_output(interpolated)

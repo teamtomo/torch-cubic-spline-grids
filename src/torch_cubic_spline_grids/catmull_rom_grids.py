@@ -15,12 +15,14 @@ from torch_cubic_spline_grids._constants import CUBIC_CATMULL_ROM_MATRIX
 CoordinateLike = Union[float, Sequence[float], torch.Tensor]
 
 
-class CubicCatmullRomGrid1d(CubicSplineGrid):
+class _CubicCatmullRomGrid(CubicSplineGrid):
+    _interpolation_matrix = CUBIC_CATMULL_ROM_MATRIX
+
+
+class CubicCatmullRomGrid1d(_CubicCatmullRomGrid):
     """Continuous parametrisation of a 1D space with a specific resolution."""
     ndim: int = 1
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_1d, matrix=CUBIC_CATMULL_ROM_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_1d)
 
     def __init__(
         self,
@@ -35,25 +37,19 @@ class CubicCatmullRomGrid1d(CubicSplineGrid):
         )
 
 
-class CubicCatmullRomGrid2d(CubicSplineGrid):
+class CubicCatmullRomGrid2d(_CubicCatmullRomGrid):
     """Continuous parametrisation of a 2D space with a specific resolution."""
     ndim: int = 2
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_2d, matrix=CUBIC_CATMULL_ROM_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_2d)
 
 
-class CubicCatmullRomGrid3d(CubicSplineGrid):
+class CubicCatmullRomGrid3d(_CubicCatmullRomGrid):
     """Continuous parametrisation of a 3D space with a specific resolution."""
     ndim: int = 3
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_3d, matrix=CUBIC_CATMULL_ROM_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_3d)
 
 
-class CubicCatmullRomGrid4d(CubicSplineGrid):
+class CubicCatmullRomGrid4d(_CubicCatmullRomGrid):
     """Continuous parametrisation of a 4D space with a specific resolution."""
     ndim: int = 4
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_4d, matrix=CUBIC_CATMULL_ROM_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_4d)

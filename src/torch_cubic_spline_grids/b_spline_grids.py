@@ -15,12 +15,14 @@ from torch_cubic_spline_grids._constants import CUBIC_B_SPLINE_MATRIX
 CoordinateLike = Union[float, Sequence[float], torch.Tensor]
 
 
-class CubicBSplineGrid1d(CubicSplineGrid):
+class _CubicBSplineGrid(CubicSplineGrid):
+    _interpolation_matrix = CUBIC_B_SPLINE_MATRIX
+
+
+class CubicBSplineGrid1d(_CubicBSplineGrid):
     """Continuous parametrisation of a 1D space with a specific resolution."""
     ndim: int = 1
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_1d, matrix=CUBIC_B_SPLINE_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_1d)
 
     def __init__(
         self,
@@ -35,25 +37,19 @@ class CubicBSplineGrid1d(CubicSplineGrid):
         )
 
 
-class CubicBSplineGrid2d(CubicSplineGrid):
+class CubicBSplineGrid2d(_CubicBSplineGrid):
     """Continuous parametrisation of a 2D space with a specific resolution."""
     ndim: int = 2
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_2d, matrix=CUBIC_B_SPLINE_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_2d)
 
 
-class CubicBSplineGrid3d(CubicSplineGrid):
+class CubicBSplineGrid3d(_CubicBSplineGrid):
     """Continuous parametrisation of a 3D space with a specific resolution."""
     ndim: int = 3
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_3d, matrix=CUBIC_B_SPLINE_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_3d)
 
 
-class CubicBSplineGrid4d(CubicSplineGrid):
+class CubicBSplineGrid4d(_CubicBSplineGrid):
     """Continuous parametrisation of a 4D space with a specific resolution."""
     ndim: int = 4
-    _interpolation_function: Callable = partial(
-        _interpolate_grid_4d, matrix=CUBIC_B_SPLINE_MATRIX
-    )
+    _interpolation_function: Callable = partial(_interpolate_grid_4d)
