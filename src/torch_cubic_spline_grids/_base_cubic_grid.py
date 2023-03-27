@@ -38,7 +38,7 @@ class CubicSplineGrid(torch.nn.Module):
         u = self._coerce_to_batched_coordinates(u)  # (b, d)
         interpolated = [
             self._interpolation_function(
-                self._data, minibatch_u, matrix=self._interpolation_matrix
+                self._data, minibatch_u, matrix=self.interpolation_matrix
             )
             for minibatch_u in batch(u, n=self._minibatch_size)
         ]  # List[Tensor[(b, d)]]

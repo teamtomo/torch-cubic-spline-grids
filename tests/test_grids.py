@@ -85,6 +85,13 @@ def test_calling_1d_grid_with_stacked_coords(grid_cls):
     assert torch.allclose(result, torch.tensor([0]).float())
 
 
+def test_interpolation_matrix_device():
+    model = CubicBSplineGrid1d(resolution=3)
+    assert model.interpolation_matrix.device == torch.device('cpu')
+    model.to(torch.device('meta'))
+    assert model.interpolation_matrix.device == torch.device('meta')
+
+
 @pytest.mark.parametrize(
     'grid_cls', [CubicBSplineGrid2d, CubicCatmullRomGrid2d]
 )
