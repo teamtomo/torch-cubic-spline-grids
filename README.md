@@ -71,9 +71,9 @@ The image above shows the values of 6 control points on a 1D grid being optimise
 that interpolating between them with cubic B-spline interpolation approximates a single oscillation of a sine wave. 
 
 Notebooks are available for this 
-[1D example](./examples/optimise_1d_grid.ipynb) 
+[1D example](./examples/optimise_1d_grid_model.ipynb) 
 and a similar 
-[2D example](./examples/optimise_2d_grid.ipynb).
+[2D example](./examples/optimise_2d_grid_model.ipynb).
 
 ### Types of grids
 
