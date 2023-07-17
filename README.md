@@ -24,7 +24,7 @@ Grids are defined by
 - how we interpolate between values on grid points
 
 All grids in this package consist of uniformly spaced points covering the full 
-extend of each dimension.
+extent of each dimension.
 
 ### First steps
 Let's make a simple 2D grid with one value on each grid point.
