@@ -86,10 +86,19 @@ def test_calling_1d_grid_with_stacked_coords(grid_cls):
 
 
 def test_interpolation_matrix_device():
-    model = CubicBSplineGrid1d(resolution=3)
-    assert model.interpolation_matrix.device == torch.device('cpu')
-    model.to(torch.device('meta'))
-    assert model.interpolation_matrix.device == torch.device('meta')
+    """Interpolation matrix should move when Module moves to a different device."""
+    grid = CubicBSplineGrid1d(resolution=3)
+    assert grid.interpolation_matrix.device == torch.device('cpu')
+    grid.to(torch.device('meta'))
+    assert grid.interpolation_matrix.device == torch.device('meta')
+
+
+def test_grid_device():
+    """Grid data should move when Module moves to a different device."""
+    grid = CubicBSplineGrid1d(resolution=3)
+    assert grid.data.device == torch.device('cpu')
+    grid.to(torch.device('meta'))
+    assert grid.data.device == torch.device('meta')
 
 
 @pytest.mark.parametrize(
