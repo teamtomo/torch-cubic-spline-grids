@@ -1,13 +1,13 @@
-from typing import Tuple, Iterable
+from collections.abc import Sequence
+from typing import Callable, Iterable, Tuple
 
 import einops
 import torch
 
-from torch_cubic_spline_grids.pad_grids import pad_grid_1d
-
 
 def generate_sample_positions_for_padded_grid_1d(
-    n_samples: int, device: torch.device) -> torch.Tensor:
+    n_samples: int, device: torch.device
+) -> torch.Tensor:
     """Generate a 1D vector of sample coordinates for a padded grid.
 
     Coordinate system is [0, 1] covering each dimension, pre-padding.
@@ -53,6 +53,7 @@ def find_control_point_idx_1d(
         Monotonically increasing 1D array of sample positions.
     query_points: torch.Tensor
         `(b, )` array of query points for which control point indices.
+
     Returns
     -------
     control_point_idx: torch.Tensor
@@ -92,7 +93,8 @@ def interpolants_to_interpolation_data_1d(
     Parameters
     ----------
     interpolants: torch.Tensor
-        `(b, )` batch of values in range [0, 1] covering the dimension being interpolated.
+        `(b, )` batch of values in range [0, 1] covering the dimension being
+        interpolated.
     n_samples: int
         The number of samples on the grid being interpolated (prior to padding).
 
@@ -105,9 +107,7 @@ def interpolants_to_interpolation_data_1d(
     interpolants = torch.clamp(interpolants, min=0, max=1)
     device = interpolants.device
     if n_samples > 1:
-        grid_u = generate_sample_positions_for_padded_grid_1d(
-            n_samples, device=device
-        )
+        grid_u = generate_sample_positions_for_padded_grid_1d(n_samples, device=device)
         control_point_idx = find_control_point_idx_1d(
             sample_positions=grid_u, query_points=interpolants
         )
@@ -140,8 +140,41 @@ def coerce_to_multichannel_grid(grid: torch.Tensor, grid_ndim: int):
     return grid
 
 
-def batch(iterable: Iterable, n: int = 1) -> Iterable[Iterable]:
+def transform_to_monotonic_nd(tensor: torch.Tensor, ndims: int, monotonicity: str):
+    """Transform tensor values, so they are monotonic across dimensions.
+
+    Parameters
+    ----------
+    tensor: torch.Tensor
+        a tensor of the arbitrary shape.
+    ndims: int
+        the number of the dimensions counting from the last to the first, for which
+        elements should be monotonic.
+    monotonicity: str
+        Either 'nodecreasing' or 'nonincreasing'.
+
+    Returns
+    -------
+    tensor: torch.Tensor
+        a tensor, with elements monotonic for the last `ndims` dimensions.
+    """
+    monotonicity_function: Callable
+
+    if monotonicity == 'nondecreasing':
+        monotonicity_function = torch.cummax
+    elif monotonicity == 'nonincreasing':
+        monotonicity_function = torch.cummin
+    elif monotonicity != '':
+        raise ValueError(f'Unsupported monotonicity type "{monotonicity}" specified.')
+
+    for dim in range(1, ndims + 1):
+        tensor, _ = monotonicity_function(tensor, dim=-dim)
+
+    return tensor
+
+
+def batch(iterable: Sequence, n: int = 1) -> Iterable[Iterable]:
     """Split an iterable into batches of constant length."""
-    l = len(iterable)
-    for idx in range(0, l, n):
-        yield iterable[idx:min(idx + n, l)]
+    max_len = len(iterable)
+    for idx in range(0, max_len, n):
+        yield iterable[idx : min(idx + n, max_len)]

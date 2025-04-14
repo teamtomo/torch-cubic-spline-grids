@@ -35,7 +35,6 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=6.0", "pytest-cov"]
 dev = [
-    "black",
     "ipython",
     "mypy",
     "pdbpp",
@@ -72,6 +71,8 @@ source = "vcs"
 [tool.ruff]
 line-length = 88
 target-version = "py38"
+
+[tool.ruff.lint]
 extend-select = [
     "E",    # style errors
     "F",    # flakes
@@ -84,7 +85,6 @@ extend-select = [
     "B",    # flake8-bugbear
     "A001", # flake8-builtins
     "RUF",  # ruff-specific rules
-    "M001", # Unused noqa directive
 ]
 extend-ignore = [
     "D100", # Missing docstring in public module
@@ -96,12 +96,20 @@ extend-ignore = [
     "D416", # Section name should end with a colon
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.ruff.format]
+# Prefer single quotes over double quotes.
+quote-style = "single"
 
 # https://docs.pytest.org/en/6.2.x/customize.html
 [tool.pytest.ini_options]
 minversion = "6.0"
+pythonpath = "src"
 testpaths = ["tests"]
 filterwarnings = [
     "error",

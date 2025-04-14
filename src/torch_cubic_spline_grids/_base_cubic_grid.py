@@ -1,13 +1,15 @@
-from typing import Tuple, Callable, Optional
+from functools import partial
+from typing import Callable, Optional, Tuple
 
 import einops
 import torch
 
-from torch_cubic_spline_grids.utils import coerce_to_multichannel_grid, batch
+from torch_cubic_spline_grids.utils import batch, coerce_to_multichannel_grid
 
 
 class CubicSplineGrid(torch.nn.Module):
     """Base class for continuous parametrisations of multidimensional spaces."""
+
     resolution: Tuple[int, ...]
     ndim: int
     n_channels: int
@@ -21,25 +23,32 @@ class CubicSplineGrid(torch.nn.Module):
         resolution: Optional[Tuple[int, ...]] = None,
         n_channels: int = 1,
         minibatch_size: int = 1_000_000,
+        monotonicity: Optional[str] = None,
     ):
         super().__init__()
         if resolution is None:
             resolution = [2] * self.ndim
-        grid_shape = tuple([n_channels, *resolution])
+        grid_shape = (n_channels, *resolution)
         self.data = torch.zeros(size=grid_shape)
         self._minibatch_size = minibatch_size
+        self._monotonicity = monotonicity
         self.register_buffer(
             name='interpolation_matrix',
             tensor=self._interpolation_matrix,
-            persistent=False
+            persistent=False,
         )
 
     def forward(self, u: torch.Tensor) -> torch.Tensor:
         u = self._coerce_to_batched_coordinates(u)  # (b, d)
+        interpolation_function = partial(
+            self._interpolation_function,
+            self._data,
+            matrix=self.interpolation_matrix,
+            monotonicity=self._monotonicity,
+        )
+
         interpolated = [
-            self._interpolation_function(
-                self._data, minibatch_u, matrix=self.interpolation_matrix
-            )
+            interpolation_function(minibatch_u)
             for minibatch_u in batch(u, n=self._minibatch_size)
         ]  # List[Tensor[(b, d)]]
         interpolated = torch.cat(interpolated, dim=0)  # (b, d)
@@ -47,7 +56,7 @@ class CubicSplineGrid(torch.nn.Module):
 
     @classmethod
     def from_grid_data(cls, data: torch.Tensor):
-        """Instantiate a grid from existing grid data
+        """Instantiate a grid from existing grid data.
 
         Parameters
         ----------
