@@ -11,6 +11,7 @@ from torch_cubic_spline_grids.interpolate_grids import (
     interpolate_grid_3d as _interpolate_grid_3d,
     interpolate_grid_4d as _interpolate_grid_4d,
 )
+from torch_cubic_spline_grids.utils import MonotonicityType
 
 CoordinateLike = Union[float, Sequence[float], torch.Tensor]
 
@@ -30,7 +31,7 @@ class CubicBSplineGrid1d(_CubicBSplineGrid):
         resolution: Optional[Union[int, Tuple[int]]] = None,
         n_channels: int = 1,
         minibatch_size: int = 1_000_000,
-        monotonicity: Optional[str] = None,
+        monotonicity: Optional[MonotonicityType] = None,
     ):
         if isinstance(resolution, int):
             resolution = (resolution,)

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Callable, Iterable, Tuple
+from typing import Callable, Iterable, Literal, Tuple
 
 import einops
 import torch
@@ -41,7 +41,7 @@ def generate_sample_positions_for_padded_grid_1d(
 
 def find_control_point_idx_1d(
     sample_positions: torch.Tensor, query_points: torch.Tensor
-):
+) -> torch.Tensor:
     """Find indices of four control points required for cubic interpolation.
 
     E.g. for sample positions `[0, 1, 2, 3, 4, 5]` and query point `2.5` the control
@@ -124,7 +124,7 @@ def interpolants_to_interpolation_data_1d(
     return control_point_idx, interpolation_coordinate
 
 
-def coerce_to_multichannel_grid(grid: torch.Tensor, grid_ndim: int):
+def coerce_to_multichannel_grid(grid: torch.Tensor, grid_ndim: int) -> torch.Tensor:
     """If missing, add a channel dimension to a multidimensional grid.
 
     e.g. for a 2D (h, w) grid
@@ -140,7 +140,12 @@ def coerce_to_multichannel_grid(grid: torch.Tensor, grid_ndim: int):
     return grid
 
 
-def transform_to_monotonic_nd(tensor: torch.Tensor, ndims: int, monotonicity: str):
+MonotonicityType = Literal['increasing', 'decreasing']
+
+
+def transform_to_monotonic_nd(
+    tensor: torch.Tensor, ndims: int, monotonicity: MonotonicityType
+) -> torch.Tensor:
     """Transform tensor values, so they are monotonic across dimensions.
 
     Parameters
@@ -151,7 +156,7 @@ def transform_to_monotonic_nd(tensor: torch.Tensor, ndims: int, monotonicity: st
         the number of the dimensions counting from the last to the first, for which
         elements should be monotonic.
     monotonicity: str
-        Either 'nodecreasing' or 'nonincreasing'.
+        Either 'decreasing' or 'increasing'.
 
     Returns
     -------
@@ -160,9 +165,9 @@ def transform_to_monotonic_nd(tensor: torch.Tensor, ndims: int, monotonicity: st
     """
     monotonicity_function: Callable
 
-    if monotonicity == 'nondecreasing':
+    if monotonicity == 'increasing':
         monotonicity_function = torch.cummax
-    elif monotonicity == 'nonincreasing':
+    elif monotonicity == 'decreasing':
         monotonicity_function = torch.cummin
     elif monotonicity != '':
         raise ValueError(f'Unsupported monotonicity type "{monotonicity}" specified.')

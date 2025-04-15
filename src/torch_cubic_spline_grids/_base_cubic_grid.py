@@ -4,7 +4,11 @@ from typing import Callable, Optional, Tuple
 import einops
 import torch
 
-from torch_cubic_spline_grids.utils import batch, coerce_to_multichannel_grid
+from torch_cubic_spline_grids.utils import (
+    MonotonicityType,
+    batch,
+    coerce_to_multichannel_grid,
+)
 
 
 class CubicSplineGrid(torch.nn.Module):
@@ -23,11 +27,11 @@ class CubicSplineGrid(torch.nn.Module):
         resolution: Optional[Tuple[int, ...]] = None,
         n_channels: int = 1,
         minibatch_size: int = 1_000_000,
-        monotonicity: Optional[str] = None,
+        monotonicity: Optional[MonotonicityType] = None,
     ):
         super().__init__()
         if resolution is None:
-            resolution = [2] * self.ndim
+            resolution = (2,) * self.ndim
         grid_shape = (n_channels, *resolution)
         self.data = torch.zeros(size=grid_shape)
         self._minibatch_size = minibatch_size

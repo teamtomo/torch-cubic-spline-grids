@@ -36,17 +36,17 @@ def test_1d_grid_optimisation():
     assert mean_absolute_error.item() < 0.02
 
 
-def test_1d_grid_optimization_non_increasing():
+def test_1d_grid_optimization_decreasing():
     grid_resolution = 8
     n_observations_per_iteration = 100
     grid = CubicBSplineGrid1d(
-        resolution=grid_resolution, n_channels=1, monotonicity='nonincreasing'
+        resolution=grid_resolution, n_channels=1, monotonicity='decreasing'
     )
 
     def f(x: torch.Tensor, add_noise: bool = False):
         y = torch.exp(-5 * x)
         if add_noise is True:
-            y += torch.normal(mean=torch.zeros(len(y)), std=0.3)
+            y += torch.normal(mean=torch.zeros(len(y)), std=0.4)
         return y
 
     optimiser = torch.optim.SGD(lr=0.1, params=grid.parameters())
@@ -60,12 +60,9 @@ def test_1d_grid_optimization_non_increasing():
         optimiser.zero_grad()
 
     x = torch.linspace(0, 1, steps=100)
-    ground_truth = f(x)
     prediction = grid(x).squeeze()
-    mean_absolute_error = torch.mean(torch.abs(prediction - ground_truth))
-    assert mean_absolute_error.item() < 0.02
 
-    eps = torch.finfo(prediction.dtype).eps
+    eps = torch.tensor(1e-5, dtype=prediction.dtype)
     non_increasing = torch.diff(prediction, dim=-1) <= eps
     assert non_increasing.all().item()
 

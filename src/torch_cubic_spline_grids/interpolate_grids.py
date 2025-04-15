@@ -16,6 +16,7 @@ from torch_cubic_spline_grids.pad_grids import (
     pad_grid_4d,
 )
 from torch_cubic_spline_grids.utils import (
+    MonotonicityType,
     interpolants_to_interpolation_data_1d,
     transform_to_monotonic_nd,
 )
@@ -25,7 +26,7 @@ def interpolate_grid_1d(
     grid: torch.Tensor,
     u: torch.Tensor,
     matrix: torch.Tensor,
-    monotonicity: Optional[str] = None,
+    monotonicity: Optional[MonotonicityType] = None,
 ) -> torch.Tensor:
     """Uniform cubic spline interpolation on a 1D grid.
 
@@ -41,7 +42,7 @@ def interpolate_grid_1d(
     matrix: torch.Tensor
         `(4, 4)` characteristic matrix for the spline.
     monotonicity: str
-        when either 'nondecreasing' or 'nonincreasing' is specified, ensures
+        when either 'increasing' or 'decreasing' is specified, ensures
         that control points of spline are monotonic.
 
     Returns
@@ -59,13 +60,10 @@ def interpolate_grid_1d(
 
     # find control point indices and interpolation coordinate
     idx, t = interpolants_to_interpolation_data_1d(u[:, 0], n_samples=w)
+    if monotonicity:
+        grid = transform_to_monotonic_nd(grid, ndims=1, monotonicity=monotonicity)
     control_points = grid[..., idx]  # (c, b, 4)
     control_points = einops.rearrange(control_points, 'c b p -> b c p')
-
-    if monotonicity:
-        control_points = transform_to_monotonic_nd(
-            control_points, ndims=1, monotonicity=monotonicity
-        )
 
     # interpolate
     return interpolate_pieces_1d(control_points, t, matrix=matrix)
@@ -75,7 +73,7 @@ def interpolate_grid_2d(
     grid: torch.Tensor,
     u: torch.Tensor,
     matrix: torch.Tensor,
-    monotonicity: Optional[str] = None,
+    monotonicity: Optional[MonotonicityType] = None,
 ) -> torch.Tensor:
     """Uniform cubic B-spline interpolation on a 2D grid.
 
@@ -90,7 +88,7 @@ def interpolate_grid_2d(
     matrix: torch.Tensor
         `(4, 4)` characteristic matrix for the spline.
     monotonicity: str
-        when either 'nondecreasing' or 'nonincreasing' is specified, ensures
+        when either 'increasing' or 'decreasing' is specified, ensures
         that control points of spline are monotonic.
 
     Returns
@@ -111,12 +109,10 @@ def interpolate_grid_2d(
     # construct (4, 4) grids of control points and 2D interpolant then interpolate
     idx_h = einops.repeat(idx_h, 'b h -> b h w', w=4)
     idx_w = einops.repeat(idx_w, 'b w -> b h w', h=4)
+    if monotonicity:
+        grid = transform_to_monotonic_nd(grid, ndims=2, monotonicity=monotonicity)
     control_points = grid[..., idx_h, idx_w]  # (c, b, 4, 4)
     control_points = einops.rearrange(control_points, 'c b h w -> b c h w')
-    if monotonicity:
-        control_points = transform_to_monotonic_nd(
-            control_points, ndims=2, monotonicity=monotonicity
-        )
 
     t = einops.rearrange([t_h, t_w], 'hw b -> b hw')
     return interpolate_pieces_2d(control_points, t, matrix=matrix)
@@ -126,7 +122,7 @@ def interpolate_grid_3d(
     grid: torch.Tensor,
     u: torch.Tensor,
     matrix: torch.Tensor,
-    monotonicity: Optional[str] = None,
+    monotonicity: Optional[MonotonicityType] = None,
 ) -> torch.Tensor:
     """Uniform cubic B-spline interpolation on a 3D grid.
 
@@ -142,7 +138,7 @@ def interpolate_grid_3d(
     matrix: torch.Tensor
         `(4, 4)` characteristic matrix for the spline.
     monotonicity: str
-        when either 'nondecreasing' or 'nonincreasing' is specified, ensures
+        when either 'increasing' or 'decreasing' is specified, ensures
         that control points of spline are monotonic.
 
     Returns
@@ -165,12 +161,10 @@ def interpolate_grid_3d(
     idx_d = einops.repeat(idx_d, 'b d -> b d h w', h=4, w=4)
     idx_h = einops.repeat(idx_h, 'b h -> b d h w', d=4, w=4)
     idx_w = einops.repeat(idx_w, 'b w -> b d h w', d=4, h=4)
+    if monotonicity:
+        grid = transform_to_monotonic_nd(grid, ndims=3, monotonicity=monotonicity)
     control_points = grid[:, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4)
     control_points = einops.rearrange(control_points, 'c b d h w -> b c d h w')
-    if monotonicity:
-        control_points = transform_to_monotonic_nd(
-            control_points, ndims=3, monotonicity=monotonicity
-        )
 
     t = einops.rearrange([t_d, t_h, t_w], 'dhw b -> b dhw')
     return interpolate_pieces_3d(control_points, t, matrix=matrix)
@@ -180,7 +174,7 @@ def interpolate_grid_4d(
     grid: torch.Tensor,
     u: torch.Tensor,
     matrix: torch.Tensor,
-    monotonicity: Optional[str] = None,
+    monotonicity: Optional[MonotonicityType] = None,
 ) -> torch.Tensor:
     """Uniform cubic B-spline interpolation on a 4D grid.
 
@@ -197,7 +191,7 @@ def interpolate_grid_4d(
     matrix: torch.Tensor
         `(4, 4)` characteristic matrix for the spline.
     monotonicity: str
-        when either 'nondecreasing' or 'nonincreasing' is specified, ensures
+        when either 'increasing' or 'decreasing' is specified, ensures
         that control points of spline are monotonic.
 
     Returns
@@ -222,12 +216,10 @@ def interpolate_grid_4d(
     idx_d = einops.repeat(idx_d, 'b d -> b t d h w', t=4, h=4, w=4)
     idx_h = einops.repeat(idx_h, 'b h -> b t d h w', t=4, d=4, w=4)
     idx_w = einops.repeat(idx_w, 'b w -> b t d h w', t=4, d=4, h=4)
+    if monotonicity:
+        grid = transform_to_monotonic_nd(grid, ndims=3, monotonicity=monotonicity)
     control_points = grid[:, idx_t, idx_d, idx_h, idx_w]  # (c, b, 4, 4, 4, 4)
     control_points = einops.rearrange(control_points, 'c b t d h w -> b c t d h w')
-    if monotonicity:
-        control_points = transform_to_monotonic_nd(
-            control_points, ndims=3, monotonicity=monotonicity
-        )
 
     t = einops.rearrange([t_t, t_d, t_h, t_w], 'tdhw b -> b tdhw')
     return interpolate_pieces_4d(control_points, t, matrix=matrix)
