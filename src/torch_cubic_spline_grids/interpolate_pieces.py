@@ -1,13 +1,12 @@
 """Interpolate 'pieces' for piecewise uniform cubic B-spline interpolation."""
-import torch
-import einops
 
-from ._constants import CUBIC_B_SPLINE_MATRIX, CUBIC_CATMULL_ROM_MATRIX
+import einops
+import torch
 
 
 def interpolate_pieces_1d(
     control_points: torch.Tensor, t: torch.Tensor, matrix: torch.Tensor
-):
+) -> torch.Tensor:
     """Batched uniform 1D cubic spline interpolation.
 
     ```
@@ -34,7 +33,7 @@ def interpolate_pieces_1d(
     interpolated: torch.Tensor
         `(b, c)` array of per-channel interpolants of `control_points` at `u`.
     """
-    t = einops.rearrange([t ** 0, t, t ** 2, t ** 3], 'u b -> b 1 1 u')
+    t = einops.rearrange([t**0, t, t**2, t**3], 'u b -> b 1 1 u')
     control_points = einops.rearrange(control_points, 'b c p -> b c p 1')
     interpolated = t @ matrix @ control_points
     return einops.rearrange(interpolated, 'b c 1 1 -> b c')
@@ -42,7 +41,7 @@ def interpolate_pieces_1d(
 
 def interpolate_pieces_2d(
     control_points: torch.Tensor, t: torch.Tensor, matrix: torch.Tensor
-):
+) -> torch.Tensor:
     """Batched uniform 2D cubic B-spline interpolation.
 
     Parameters
@@ -51,8 +50,8 @@ def interpolate_pieces_2d(
         `(b, c, 4, 4)` batch of 2D multichannel grids of uniformly spaced control
         points `[p0, p1, p2, p3]` for cubic B-spline interpolation.
     t: torch.Tensor
-        `(b, 2)` batch of values in the range `[0, 1]` defining the position of 2D points
-        to be interpolated within the interval `[p1, p2]` along dim 1 and 2 of
+        `(b, 2)` batch of values in the range `[0, 1]` defining the position of 2D
+        points to be interpolated within the interval `[p1, p2]` along dim 1 and 2 of
         the 2D grid of control points.
     matrix: torch.Tensor
         `(4, 4)` characteristic matrix for the spline.
@@ -81,7 +80,7 @@ def interpolate_pieces_2d(
 
 def interpolate_pieces_3d(
     control_points: torch.Tensor, t: torch.Tensor, matrix: torch.Tensor
-):
+) -> torch.Tensor:
     """Batched uniform 3D cubic B-spline interpolation.
 
     Parameters
@@ -121,7 +120,7 @@ def interpolate_pieces_3d(
 
 def interpolate_pieces_4d(
     control_points: torch.Tensor, t: torch.Tensor, matrix: torch.Tensor
-):
+) -> torch.Tensor:
     """Batched 4D cubic B-spline interpolation.
 
     Parameters

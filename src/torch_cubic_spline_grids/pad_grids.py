@@ -2,7 +2,7 @@ import einops
 import torch
 
 
-def pad_grid_1d(grid: torch.Tensor):
+def pad_grid_1d(grid: torch.Tensor) -> torch.Tensor:
     """Pad in the last dimension according to local gradients.
 
     e.g. [0, 1, 2] -> [-1, 0, 1, 2, 3]
