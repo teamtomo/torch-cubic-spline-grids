@@ -1,8 +1,8 @@
-from functools import partial
 from typing import Callable, Optional, Tuple
 
 import einops
 import torch
+from typing_extensions import Self
 
 from torch_cubic_spline_grids.utils import (
     MonotonicityType,
@@ -14,9 +14,7 @@ from torch_cubic_spline_grids.utils import (
 class CubicSplineGrid(torch.nn.Module):
     """Base class for continuous parametrisations of multidimensional spaces."""
 
-    resolution: Tuple[int, ...]
     ndim: int
-    n_channels: int
     _data: torch.nn.Parameter
     _interpolation_function: Callable
     _interpolation_matrix: torch.Tensor
@@ -42,24 +40,26 @@ class CubicSplineGrid(torch.nn.Module):
             persistent=False,
         )
 
-    def forward(self, u: torch.Tensor) -> torch.Tensor:
-        u = self._coerce_to_batched_coordinates(u)  # (b, d)
-        interpolation_function = partial(
-            self._interpolation_function,
+    def _interpolate(self, u: torch.Tensor) -> torch.Tensor:
+        return self._interpolation_function(
             self._data,
+            u,
             matrix=self.interpolation_matrix,
             monotonicity=self._monotonicity,
         )
 
+    def forward(self, u: torch.Tensor) -> torch.Tensor:
+        u = self._coerce_to_batched_coordinates(u)  # (b, d)
+
         interpolated = [
-            interpolation_function(minibatch_u)
+            self._interpolate(minibatch_u)
             for minibatch_u in batch(u, n=self._minibatch_size)
         ]  # List[Tensor[(b, d)]]
         interpolated = torch.cat(interpolated, dim=0)  # (b, d)
         return self._unpack_interpolated_output(interpolated)
 
     @classmethod
-    def from_grid_data(cls, data: torch.Tensor):
+    def from_grid_data(cls, data: torch.Tensor) -> Self:
         """Instantiate a grid from existing grid data.
 
         Parameters
@@ -83,13 +83,13 @@ class CubicSplineGrid(torch.nn.Module):
 
     @property
     def n_channels(self) -> int:
-        return self._data.shape[0]
+        return int(self._data.size(0))
 
     @property
     def resolution(self) -> Tuple[int, ...]:
         return tuple(self._data.shape[1:])
 
-    def _coerce_to_batched_coordinates(self, u: torch.Tensor) -> Tuple[torch.Tensor,]:
+    def _coerce_to_batched_coordinates(self, u: torch.Tensor) -> torch.Tensor:
         u = torch.atleast_1d(torch.as_tensor(u, dtype=torch.float32))
         self._input_is_coordinate_like = u.shape[-1] == self.ndim
         if self._input_is_coordinate_like is False and self.ndim == 1:
